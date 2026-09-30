@@ -1,0 +1,22 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DB_HOST", "localhost") %>
+  port: <%= ENV.fetch("DB_PORT", 5432) %>
+  username: <%= ENV.fetch("DB_USER", "postgres") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "postgres") %>
+
+development:
+  <<: *default
+  database: rbac_admin_development
+
+test:
+  <<: *default
+  database: rbac_admin_test
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DB_NAME", "rbac_admin_production") %>
+  username: <%= ENV.fetch("DB_USER", "rbac_admin") %>
+  password: <%= ENV["DB_PASSWORD"] %>

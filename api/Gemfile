@@ -1,0 +1,33 @@
+source "https://rubygems.org"
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby "3.3.5"
+
+gem "rails", "~> 7.1.5"
+gem "pg", "~> 1.5"
+gem "puma", ">= 5.0"
+
+# json 3.x 移除了 quirks_mode 关键字，与 Rails 7.1 的 JSON 编码不兼容，必须锁在 2.x
+gem "json", "~> 2.7"
+
+# 认证与授权
+gem "bcrypt", "~> 3.1.7"
+gem "jwt", "~> 2.8"
+
+# 跨域 / 分页
+gem "rack-cors", "~> 2.0"
+gem "kaminari", "~> 1.2"
+
+gem "tzinfo-data", platforms: %i[windows jruby]
+gem "bootsnap", require: false
+
+group :development, :test do
+  gem "debug", platforms: %i[mri windows], require: "debug/prelude"
+  gem "dotenv-rails"
+  gem "rspec-rails", "~> 7.0"
+  gem "factory_bot_rails"
+end
+
+group :development do
+  gem "rubocop-rails", require: false
+end

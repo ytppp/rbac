@@ -1,0 +1,21 @@
+.bundle
+db/*.sqlite3
+db/*.sqlite3-*
+.env
+!.env.example
+*.rbc
+*.log
+coverage
+.byebug_history
+.rspec_status
+node_modules
+
+# Rails 运行时目录
+log/*
+!log/.keep
+tmp/*
+!tmp/.keep
+!tmp/pids
+!tmp/pids/.keep
+storage/*
+!storage/.keep

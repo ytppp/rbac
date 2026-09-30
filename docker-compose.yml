@@ -1,0 +1,89 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: rbac-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-rbac_admin_development}
+      TZ: Asia/Shanghai
+    ports:
+      - "${DB_PORT_PUBLISHED:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-rbac_admin_development}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./api
+    container_name: rbac-api
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: development
+      RAILS_MAX_THREADS: 5
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-please-change-in-production}
+      JWT_EXPIRE_HOURS: 12
+      # app（3001）与 admin（5173）都是浏览器直连后端，都要放行
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
+    ports:
+      - "3000:3000"
+    volumes:
+      # 代码挂载进来，改代码即时生效；gem 装在镜像内，不受影响
+      - ./api:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+
+  admin:
+    build:
+      context: ./admin
+    container_name: rbac-admin
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: /api/v1
+      # 容器内通过服务名访问后端，而不是 localhost
+      VITE_PROXY_TARGET: http://api:3000
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./admin:/app
+      # node_modules 必须是容器内的 Linux 版本，用命名卷隔离，避免被宿主机目录覆盖
+      - admin_node_modules:/app/node_modules
+    depends_on:
+      - api
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 5173"]
+
+  app:
+    build:
+      context: ./app
+    container_name: rbac-app
+    restart: unless-stopped
+    environment:
+      # SSR 走容器内网直连 api；浏览器走宿主机地址（api 已放行 3001）
+      NUXT_API_SERVER_BASE: http://api:3000/api/v1
+      NUXT_PUBLIC_API_BASE: http://localhost:3000/api/v1
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./app:/app
+      - app_node_modules:/app/node_modules
+    depends_on:
+      - api
+    command: ["sh", "-c", "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0 --port 3000"]
+
+volumes:
+  db_data:
+  admin_node_modules:
+  app_node_modules:
