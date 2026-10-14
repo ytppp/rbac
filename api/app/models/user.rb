@@ -12,6 +12,9 @@ class User < ApplicationRecord
 
   has_many :note_likes, dependent: :destroy
 
+  # 该用户创建的内容；删除用户时保留内容，只解除作者关联
+  has_many :notes, dependent: :nullify
+
   # --- 校验规则 ---
   validates :email,
             presence: true,

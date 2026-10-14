@@ -26,6 +26,8 @@ export interface UserInfo {
   name: string
   status: number
   status_text: string
+  /** 头像地址，未上传时为 null */
+  avatar_url: string | null
   last_login_at: string | null
   created_at: string
   updated_at: string
@@ -118,12 +120,11 @@ export interface AdminNote {
   updated_at: string
 }
 
-/** 新增 / 编辑内容时提交的字段 */
+/** 新增 / 编辑内容时提交的字段（作者由当前登录用户决定，不在提交字段里） */
 export interface NotePayload {
   title: string
   cover_url: string
   cover_ratio: number
-  author_name: string
   avatar_color: string
   channel: string
   sort: number

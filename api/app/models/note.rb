@@ -16,6 +16,9 @@ class Note < ApplicationRecord
   # likes_count 由 NoteLike 的 counter_cache 自动维护，无需手动处理
   has_many :note_likes, dependent: :destroy
 
+  # 作者：管理后台新建内容时挂到当前登录用户上；历史数据允许为空
+  belongs_to :user, optional: true
+
   scope :sorted, -> { order(sort: :asc, id: :asc) }
 
   scope :in_channel, ->(channel) {

@@ -11,7 +11,8 @@ module Api
       before_action :set_note, only: %i[like unlike]
 
       def index
-        paginated = paginate(Note.in_channel(params[:channel]).search(params[:keyword]).sorted)
+        # includes(:user) 预加载作者，避免序列化 author_avatar 时逐条查库
+        paginated = paginate(Note.in_channel(params[:channel]).search(params[:keyword]).sorted.includes(:user))
 
         # 一次性查出本页已赞 id，避免序列化时逐条查询
         liked_ids = if current_user

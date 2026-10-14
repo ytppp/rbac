@@ -8,6 +8,8 @@ export interface Note {
   /** 封面宽高比（宽 / 高），图片加载前用它占位，避免瀑布流抖动 */
   cover_ratio: number
   author: string
+  /** 作者头像地址；无头像时为 null，前端回退到「首字 + 底色」 */
+  author_avatar: string | null
   avatar_color: string
   likes: number
   channel: string

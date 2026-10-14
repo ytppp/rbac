@@ -155,6 +155,8 @@ body {
   background: linear-gradient(135deg, #ffb199, #ff2e4d);
   color: #fff;
   font-size: 13px;
+  /* 走 <img> 展示上传头像时裁成圆形 */
+  object-fit: cover;
 }
 
 /* ---------- 顶栏登录态 ---------- */
@@ -336,8 +338,15 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  overflow: hidden;
   color: #fff;
   font-size: 11px;
+}
+
+.note-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .note-author-name {

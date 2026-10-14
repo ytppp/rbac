@@ -24,7 +24,9 @@
 
         <!-- 已登录：显示头像 + 昵称 + 退出 -->
         <div v-if="isLoggedIn" class="user-box">
-          <span class="avatar">{{ avatarText }}</span>
+          <!-- 有头像显示头像，没有则维持原来的「首字 + 渐变底」 -->
+          <img v-if="user?.avatar_url" class="avatar" :src="user.avatar_url" :alt="user.name" />
+          <span v-else class="avatar">{{ avatarText }}</span>
           <span class="user-name">{{ user?.name }}</span>
           <button class="btn-logout" type="button" @click="logout">退出</button>
         </div>

@@ -23,6 +23,8 @@ Rails.application.routes.draw do
 
       resource :profile, only: %i[show update], controller: "profiles" do
         patch :password
+        # 头像的上传 / 删除：POST /api/v1/profile/avatar、DELETE /api/v1/profile/avatar
+        resource :avatar, only: %i[create destroy], controller: "avatars"
       end
 
       resources :users, only: %i[index show create update destroy] do

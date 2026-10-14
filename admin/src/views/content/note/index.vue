@@ -106,8 +106,11 @@
           <span class="hint">封面宽 / 高，图片加载前用它占位</span>
         </el-form-item>
 
-        <el-form-item label="作者" prop="author_name">
-          <el-input v-model="form.author_name" placeholder="请输入作者昵称" maxlength="50" />
+        <el-form-item label="作者">
+          <span class="author-text">{{ form.author_name || currentUserName }}</span>
+          <span class="hint">
+            {{ hasOwnAvatar ? '你已设置头像，后台与社区将显示你的头像' : '作者由当前登录用户决定，不可修改' }}
+          </span>
         </el-form-item>
 
         <el-form-item label="频道" prop="channel">
@@ -123,9 +126,10 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="头像颜色" prop="avatar_color">
+        <!-- 作者已有头像时，这个兜底色不参与展示，直接隐藏避免误解 -->
+        <el-form-item v-if="!hasOwnAvatar" label="头像颜色" prop="avatar_color">
           <el-color-picker v-model="form.avatar_color" />
-          <span class="hint">{{ form.avatar_color }}</span>
+          <span class="hint">作者无头像时，用它作为首字圆圈的底色</span>
         </el-form-item>
 
         <el-form-item label="排序" prop="sort">
@@ -147,8 +151,14 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { createNote, deleteNote, fetchNotes, updateNote } from '@/api/note'
+import { useUserStore } from '@/stores/user'
 import { formatTime } from '@/utils/format'
 import type { AdminNote, NotePayload } from '@/types'
+
+const userStore = useUserStore()
+const currentUserName = computed(() => userStore.displayName)
+// 当前登录用户是否已有头像：有的话「头像颜色」这个兜底字段就用不上
+const hasOwnAvatar = computed(() => Boolean(userStore.userInfo?.avatar_url))
 
 /** 文生图服务地址，和 seed 里用的是同一个 */
 const IMAGE_API_BASE = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image'
@@ -201,7 +211,6 @@ const channelOptions = computed(() => channels.value.filter((item) => item !== A
 const rules: FormRules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   cover_url: [{ required: true, message: '请输入封面地址', trigger: 'blur' }],
-  author_name: [{ required: true, message: '请输入作者', trigger: 'blur' }],
   channel: [{ required: true, message: '请选择或输入频道', trigger: 'change' }],
   cover_ratio: [{ required: true, message: '请输入宽高比', trigger: 'blur' }],
   avatar_color: [
@@ -287,7 +296,6 @@ function buildPayload(): NotePayload {
     title: form.title.trim(),
     cover_url: form.cover_url.trim(),
     cover_ratio: form.cover_ratio,
-    author_name: form.author_name.trim(),
     avatar_color: form.avatar_color,
     channel: form.channel.trim(),
     sort: form.sort
@@ -351,5 +359,9 @@ onMounted(() => {
   margin-left: 10px;
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+
+.author-text {
+  color: var(--el-text-color-primary);
 }
 </style>

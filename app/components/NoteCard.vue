@@ -9,8 +9,18 @@
 
       <div class="note-meta">
         <span class="note-author">
-          <span class="note-avatar" :style="{ backgroundColor: note.avatar_color }">
-            {{ note.author.slice(0, 1) }}
+          <!-- 有作者头像显示头像，没有则维持原来的「首字 + 底色」 -->
+          <span
+            class="note-avatar"
+            :style="note.author_avatar ? undefined : { backgroundColor: note.avatar_color }"
+          >
+            <img
+              v-if="note.author_avatar"
+              class="note-avatar-img"
+              :src="note.author_avatar"
+              :alt="note.author"
+            />
+            <template v-else>{{ note.author.slice(0, 1) }}</template>
           </span>
           <span class="note-author-name">{{ note.author }}</span>
         </span>
