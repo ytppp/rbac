@@ -103,6 +103,39 @@ export interface LoginResult {
   permissions: string[]
 }
 
+/** 管理后台看到的内容（字段用数据库列名，便于编辑弹窗原样回填） */
+export interface AdminNote {
+  id: number
+  title: string
+  cover_url: string
+  cover_ratio: number
+  author_name: string
+  avatar_color: string
+  likes_count: number
+  channel: string
+  sort: number
+  created_at: string
+  updated_at: string
+}
+
+/** 新增 / 编辑内容时提交的字段 */
+export interface NotePayload {
+  title: string
+  cover_url: string
+  cover_ratio: number
+  author_name: string
+  avatar_color: string
+  channel: string
+  sort: number
+}
+
+/** 内容列表接口的返回：比通用 PageResult 多一个频道列表 */
+export interface AdminNoteListResult {
+  items: AdminNote[]
+  channels: string[]
+  meta: PageMeta
+}
+
 export interface ProfileResult {
   user: UserInfo
   roles: string[]

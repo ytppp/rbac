@@ -10,9 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_01_000006) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_01_000007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "note_likes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "note_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["note_id"], name: "index_note_likes_on_note_id"
+    t.index ["user_id", "note_id"], name: "index_note_likes_on_user_id_and_note_id", unique: true
+  end
 
   create_table "notes", force: :cascade do |t|
     t.string "title", null: false
@@ -90,6 +99,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_01_000006) do
     t.index ["status"], name: "index_users_on_status"
   end
 
+  add_foreign_key "note_likes", "notes", on_delete: :cascade
+  add_foreign_key "note_likes", "users", on_delete: :cascade
   add_foreign_key "permissions", "permissions", column: "parent_id", on_delete: :restrict
   add_foreign_key "role_permissions", "permissions", on_delete: :cascade
   add_foreign_key "role_permissions", "roles", on_delete: :cascade

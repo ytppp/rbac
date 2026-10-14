@@ -1,28 +1,15 @@
-# 初始化数据脚本（种子数据）。
-#
-# 执行：bin/rails db:seed
-# 本项目在容器启动时由 docker/entrypoint.sh 自动执行一次。
-#
-# 关键设计：整个脚本用 find_or_initialize_by + save! 写成「幂等」的 ——
-# 意思是跑一次和跑十次结果完全一样，已存在的记录会被更新而不是重复插入。
-# 这样容器反复重启也不会产生重复的权限节点或账号。
-#
-# find_or_initialize_by(code: xxx) 的含义：
-#   先按条件去数据库找；找到就返回这条记录（此时是「已持久化」状态），
-#   找不到就 new 一个未保存的对象（内存里），名字里的 initialize 就是指这一步。
-# 之后再 assign_attributes 赋值、save! 保存，两种情况就都能正确处理了。
+# 初始化数据脚本（种子数据），容器启动时由 docker/entrypoint.sh 调用。
+# 使用 find_or_initialize_by + save!，幂等：重复执行不会产生重复记录。
 
 # ---------- 权限树 ----------
-# 用嵌套的 Hash 描述整棵权限树，children 里放子节点。
-# 好处是「结构一目了然」，写出来的形状和最终前端的菜单树是一致的。
 PERMISSION_TREE = [
   {
     name: "仪表盘",
     code: "dashboard",
-    type: :menu,                       # :menu 是 Ruby 的符号（symbol），本质是一个轻量的不可变字符串
+    type: :menu,
     path: "/dashboard",
     component: "dashboard/index",
-    icon: "Odometer",                  # Element Plus 的图标组件名，前端据此渲染图标
+    icon: "Odometer",
     sort: 1,
     children: []
   },
@@ -31,7 +18,7 @@ PERMISSION_TREE = [
     code: "system",
     type: :menu,
     path: "/system",
-    component: nil,                    # 留空表示这一级只是「目录」，本身没有页面
+    component: nil,
     icon: "Setting",
     sort: 90,
     children: [
@@ -44,7 +31,7 @@ PERMISSION_TREE = [
         icon: "User",
         sort: 1,
         children: [
-          # 这三个是「按钮级」权限：既控制前端按钮显隐，也是后端 authorize! 的校验依据
+          # 按钮级权限：既控制前端显隐，也是后端 authorize! 的依据
           { name: "查询用户", code: "system:user:list", type: :button, sort: 1 },
           { name: "新增用户", code: "system:user:create", type: :button, sort: 2 },
           { name: "编辑用户", code: "system:user:update", type: :button, sort: 3 },
@@ -82,21 +69,43 @@ PERMISSION_TREE = [
         ]
       }
     ]
+  },
+  {
+    # 内容管理：管理 app 首页瀑布流卡片（notes 表）
+    name: "内容管理",
+    code: "content",
+    type: :menu,
+    path: "/content",
+    component: nil,
+    icon: "Picture",
+    sort: 80,
+    children: [
+      {
+        name: "内容列表",
+        code: "content:note",
+        type: :menu,
+        path: "/content/note",
+        component: "content/note/index",
+        icon: "Document",
+        sort: 1,
+        children: [
+          { name: "查询内容", code: "content:note:list", type: :button, sort: 1 },
+          { name: "新增内容", code: "content:note:create", type: :button, sort: 2 },
+          { name: "编辑内容", code: "content:note:update", type: :button, sort: 3 },
+          { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 }
+        ]
+      }
+    ]
   }
-].freeze   # freeze 表示「冻结」，防止后面不小心改到这个常量
+].freeze
 
-# 递归函数：把上面那棵树写进数据库。
-# 参数 parent 是「当前这批节点的上级对象」，第一次调用时传 nil（即根节点）。
 def seed_permissions(nodes, parent = nil)
   nodes.each do |node|
     permission = Permission.find_or_initialize_by(code: node[:code])
-    # assign_attributes 一次性批量赋值，比逐个 permission.name = ... 清爽。
-    # node[:xxx] 是取 Hash 的值；node[:xxx] 不存在时返回 nil，
-    # 所以下面用了 `|| :menu`、`|| 0` 这类默认值兜底。
     permission.assign_attributes(
       name: node[:name],
       type: node[:type] || :menu,
-      parent: parent,                  # 直接赋对象，Rails 会自动取出它的 id 存进 parent_id
+      parent: parent,
       path: node[:path],
       component: node[:component],
       icon: node[:icon],
@@ -104,31 +113,27 @@ def seed_permissions(nodes, parent = nil)
       status: :enabled
     )
     permission.save!
-    # 递归处理子节点，把刚保存的这条记录当作它们的上级
     seed_permissions(node[:children] || [], permission)
   end
 end
 
 seed_permissions(PERMISSION_TREE)
 
-# 取出所有权限 id，后面给超管角色「全量授权」时要用
 all_permission_ids = Permission.pluck(:id)
 
 # ---------- 角色 ----------
-# 1) 超级管理员：虽然代码里超管会跳过权限校验，但仍然把权限全配上，
-#    这样在「角色管理」页面看到的权限清单是完整的，不容易让人误会。
+# 超管会跳过权限校验，但仍全量授权，保证角色页的权限清单完整
 super_admin = Role.find_or_initialize_by(code: Role::SUPER_ADMIN_CODE)
 super_admin.assign_attributes(
   name: "超级管理员",
   description: "拥有全部权限，且不受权限校验限制（内置角色）",
   status: :enabled,
-  built_in: true                       # built_in 为 true 的角色不允许删除、不允许改 code
+  built_in: true
 )
 super_admin.save!
 super_admin.permission_ids = all_permission_ids
 
-# 2) 用户管理员：只有用户管理相关的权限，故意不给 user:delete，
-#    这样能直观演示「同一页面里不同角色按钮不一样」的效果。
+# 故意不给 user:delete，用于演示不同角色的按钮差异
 user_manager_codes = %w[
   dashboard
   system
@@ -142,10 +147,9 @@ user_manager.assign_attributes(
   built_in: false
 )
 user_manager.save!
-# where(code: [...]) 传数组相当于 SQL 的 IN，一次查出这些权限的 id
 user_manager.permission_ids = Permission.where(code: user_manager_codes).pluck(:id)
 
-# 3) 只读访客：只能看列表，不能做任何写操作
+# 只读访客：只能看列表
 viewer = Role.find_or_initialize_by(code: "viewer")
 viewer.assign_attributes(
   name: "只读访客",
@@ -161,12 +165,9 @@ viewer.permission_ids = Permission.where(
 # ---------- 账号 ----------
 admin = User.find_or_initialize_by(email: "admin@example.com")
 admin.assign_attributes(name: "超级管理员", status: :enabled)
-# 只在「新建账号」时才设置密码。
-# 因为密码一旦用 has_secure_password 存进去就是不可逆的哈希，
-# 每次跑 seed 都重设一遍既没必要，也会把用户自己改过的密码覆盖掉。
+# 仅在新建时设密码：密码哈希不可逆，重设会覆盖用户已改过的密码
 admin.password = "Admin@123456" if admin.new_record?
 admin.save!
-# 只在还没分配过角色时才分配，避免把管理员后来调整过的角色覆盖回去
 admin.role_ids = [super_admin.id] if admin.user_roles.empty?
 
 manager = User.find_or_initialize_by(email: "manager@example.com")
@@ -175,18 +176,15 @@ manager.password = "Manager@123456" if manager.new_record?
 manager.save!
 manager.role_ids = [user_manager.id] if manager.user_roles.empty?
 
-# puts 是 Ruby 的打印方法，把结果输出到终端，方便确认执行情况
 puts "权限初始化完成：#{Permission.count} 个权限节点 / #{Role.count} 个角色 / #{User.count} 个账号"
 puts "默认账号：admin@example.com / Admin@123456"
 puts "默认账号：manager@example.com / Manager@123456"
 
 # ---------- 内容社区（app 模块）----------
-# 封面由文生图服务按提示词生成，换服务只需改 IMAGE_API_BASE
+# 封面由文生图服务按提示词生成，可用 IMAGE_API_BASE 覆盖
 note_image_api = ENV.fetch("IMAGE_API_BASE", "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image")
 
-# 每种图片尺寸对应的宽高比，和下面每条数据的 size 字段配合使用。
-# 写成 3.0 / 4 而不是 3 / 4 很重要：整数相除在 Ruby 里结果是 0，
-# 必须有一个操作数是浮点数，结果才会是小数。
+# 各尺寸对应的宽高比；整数相除结果为 0，必须写成浮点
 note_cover_ratios = {
   "square_hd" => 1.0,
   "square" => 1.0,
@@ -196,12 +194,9 @@ note_cover_ratios = {
   "landscape_16_9" => 16.0 / 9
 }.freeze
 
-# 作者头像的底色，按顺序循环取用（见下面 index % 长度）
+# 头像底色，按下标循环取用
 note_avatar_colors = %w[#ff6b6b #f7a072 #f2b705 #06d6a0 #4cc9f0 #7b6cf6 #ef7bb0 #8ac926].freeze
 
-# 每条内容包含两部分信息：
-#   prompt / size  用于拼出封面图片地址（提示词 + 尺寸交给文生图服务）
-#   其余字段        直接存入 notes 表
 note_seeds = [
   {
     title: "夏日清爽穿搭｜白衬衫 + 直筒牛仔，通勤也能很松弛",
@@ -349,23 +344,19 @@ note_seeds = [
   }
 ]
 
-# each_with_index 遍历时同时拿到「元素」和「下标」，
-# 下标从 0 开始，下面用它生成 sort 顺序和循环取头像颜色。
 note_seeds.each_with_index do |seed, index|
   note = Note.find_or_initialize_by(title: seed[:title])
   note.assign_attributes(
-    # ERB::Util.url_encode 把提示词里的空格、逗号等转义成 %20、%2C，
-    # 否则拼出来的 URL 是非法地址，浏览器取不到图片。
     cover_url: "#{note_image_api}?prompt=#{ERB::Util.url_encode(seed[:prompt])}&image_size=#{seed[:size]}",
     cover_ratio: note_cover_ratios.fetch(seed[:size]),
     author_name: seed[:author],
-    avatar_color: note_avatar_colors[index % note_avatar_colors.length],   # 取余让颜色循环使用
+    avatar_color: note_avatar_colors[index % note_avatar_colors.length],
     likes_count: seed[:likes],
     channel: seed[:channel],
-    sort: index + 1                     # 从 1 开始编号，保持列表顺序和这里写的一致
+    sort: index + 1
   )
   note.save!
 end
 
-# channel_list 返回的数组里第一个是虚拟频道「推荐」，不是真实数据，所以要减 1
+# channel_list 首个是虚拟频道「推荐」，真实频道数需减 1
 puts "内容初始化完成：#{Note.count} 条内容 / #{Note.channel_list.size - 1} 个频道"

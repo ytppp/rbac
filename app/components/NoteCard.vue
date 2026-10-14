@@ -19,6 +19,7 @@
           class="note-like"
           :class="{ 'is-liked': liked }"
           type="button"
+          :disabled="submitting"
           @click="toggleLike"
         >
           <svg class="like-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -34,18 +35,62 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Note } from '~/composables/useNotes'
+import { useAuth } from '~/composables/useAuth'
 import { formatLikes } from '~/utils/format'
 
 const props = defineProps<{ note: Note }>()
 
-// 点赞目前只有前端状态，还没有对应的写接口
-const liked = ref(false)
+const route = useRoute()
+const { isLoggedIn, authHeaders } = useAuth()
 
-const likeText = computed(() => formatLikes(props.note.likes + (liked.value ? 1 : 0)))
+// 本地状态：从后端返回的数据初始化，点赞后本地即时更新，避免整页刷新
+const liked = ref(props.note.liked)
+const likes = ref(props.note.likes)
+const submitting = ref(false)
 
-function toggleLike() {
-  liked.value = !liked.value
+// 列表重新拉取时，同一张卡片可能被复用，这里同步一下最新的服务端状态
+watch(
+  () => props.note,
+  (note) => {
+    liked.value = note.liked
+    likes.value = note.likes
+  }
+)
+
+const likeText = computed(() => formatLikes(likes.value))
+
+async function toggleLike() {
+  if (submitting.value) return
+
+  // 未登录不能点赞：引导去登录，登录后回到当前页
+  if (!isLoggedIn.value) {
+    await navigateTo({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
+
+  submitting.value = true
+  try {
+    const baseURL = useApiBase()
+    // 已赞 -> 取消赞（DELETE /unlike）；未赞 -> 点赞（POST /like）
+    const unliking = liked.value
+
+    const result = await $fetch<{ liked: boolean; likes: number }>(
+      `/notes/${props.note.id}/${unliking ? 'unlike' : 'like'}`,
+      {
+        baseURL,
+        method: unliking ? 'DELETE' : 'POST',
+        headers: authHeaders()
+      }
+    )
+
+    liked.value = result.liked
+    likes.value = result.likes
+  } catch {
+    // 请求失败（比如 token 过期）时不改状态，保持和服务器一致
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
