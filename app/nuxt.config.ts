@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
-  css: ['~/assets/css/main.css'],
+  modules: ['@unocss/nuxt'],
   runtimeConfig: {
     // SSR 时直连 api 容器，走容器内网，不涉及跨域
     apiServerBase: 'http://localhost:3000/api/v1',
