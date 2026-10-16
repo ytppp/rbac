@@ -104,14 +104,15 @@ async function handleSubmit() {
   line-height: 1.4;
 }
 .auth-card :deep(.el-input__wrapper) {
-  @apply rounded-10px bg-[#fafafa] px-14px;
-  box-shadow: 0 0 0 1px #ededed inset;
+  @apply rounded-10px px-14px;
+  background-color: var(--c-surface);
+  box-shadow: 0 0 0 1px var(--c-line) inset;
 }
 .auth-card :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #ededed inset;
+  box-shadow: 0 0 0 1px var(--c-line) inset;
 }
 .auth-card :deep(.el-input__wrapper.is-focus) {
-  @apply bg-white;
+  background-color: var(--c-card);
   box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }
 .auth-card :deep(.el-input__inner) {

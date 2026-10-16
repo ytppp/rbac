@@ -3,7 +3,7 @@
     class="flex flex-col w-full h-full overflow-hidden cursor-pointer"
     :class="[
       {
-        'border-1 border-solid border-gray-200': border,
+        'border-1 border-solid border-line': border,
         'rounded-lg': rounded,
       },
       shadowClass,

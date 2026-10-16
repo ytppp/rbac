@@ -27,13 +27,15 @@ export default defineConfig({
       primary_dark: 'var(--el-color-primary-light-5)',
       // 之前的
       brand: '#ff2e4d',
-      page: '#f5f5f5',
-      card: '#ffffff',
-      line: '#ededed',
+      // 语义色统一走 CSS 变量，亮色/暗色取值见 assets/style/main.css
+      page: 'var(--c-page)',
+      card: 'var(--c-card)',
+      surface: 'var(--c-surface)',
+      line: 'var(--c-line)',
       ink: {
-        1: '#1f1f1f',
-        2: '#6b6b6b',
-        3: '#9b9b9b',
+        1: 'var(--c-ink-1)',
+        2: 'var(--c-ink-2)',
+        3: 'var(--c-ink-3)',
       },
     },
     breakpoints: Object.fromEntries(

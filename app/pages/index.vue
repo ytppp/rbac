@@ -1,6 +1,6 @@
 <template>
   <main>
-    <nav class="sticky top-64px z-15 border-b border-line bg-[rgba(245,245,245,0.94)] [backdrop-filter:saturate(180%)_blur(12px)]">
+    <nav class="sticky top-64px z-15 border-b border-line bg-[rgba(245,245,245,0.94)] dark:bg-[rgba(10,10,10,0.94)] [backdrop-filter:saturate(180%)_blur(12px)]">
       <div class="mx-auto max-w-[1500px] px-24px max-md:px-16px">
         <el-tabs v-model="channel" class="channel-tabs" @tab-change="handleChannelChange">
           <el-tab-pane v-for="item in channels" :key="item" :label="item" :name="item" />

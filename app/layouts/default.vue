@@ -22,7 +22,7 @@
                 <span>我</span>
               </el-menu-item>
             </el-menu>
-            <div class="flex-x-center py-5 border-0 border-t border-solid border-gray-200">
+            <div class="flex-x-center py-5 border-0 border-t border-solid border-line">
               <el-button type="primary" round>登录</el-button>
             </div>
             <template #footer>

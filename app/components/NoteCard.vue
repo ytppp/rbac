@@ -5,7 +5,7 @@
     :body-style="{ padding: '0' }"
   >
     <div
-      class="min-h-120px w-full overflow-hidden bg-[#efefef]"
+      class="min-h-120px w-full overflow-hidden bg-surface"
       :style="{ aspectRatio: String(note.cover_ratio) }"
     >
       <img class="block h-full w-full object-cover" :src="note.cover" :alt="note.title" loading="lazy" />
@@ -116,7 +116,7 @@ async function toggleLike() {
 
 /* 点赞按钮：未赞为灰，已赞 / 悬停为品牌红 */
 .note-card .note-like {
-  color: #6b6b6b;
+  color: var(--c-ink-2);
   font-size: 12px;
 }
 .note-card .note-like:hover {

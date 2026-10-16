@@ -1,6 +1,6 @@
 <template>
   <header ref="headerRef" class="headroom">
-    <div class="bg-white dark:bg-gray-950">
+    <div class="bg-card">
       <div class="flex-x-center h-[64px]">
         <div class="content-width flex-x-between h-full">
           <NuxtLink to="/" class="flex flex-none items-center gap-8px text-ink-1 no-underline">
@@ -125,7 +125,7 @@ onMounted(() => {
 <style scoped>
 /* 初始状态 */
 .headroom {
-  @apply fixed top-0 left-0 w-full z-50 border-0 border-b-2 border-solid border-gray-200 dark:border-white/10 transition-all duration-300 will-change-transform;
+  @apply fixed top-0 left-0 w-full z-50 border-0 border-b-2 border-solid border-line transition-all duration-300 will-change-transform;
 }
 /* 固定在顶部 */
 .headroom--pinned {
@@ -151,14 +151,15 @@ onMounted(() => {
   @apply flex-1 max-w-560px;
 }
 .search-input :deep(.el-input__wrapper) {
-  @apply h-38px rounded-19px bg-[#f2f2f2] px-14px;
+  @apply h-38px rounded-19px px-14px;
+  background-color: var(--c-surface);
   box-shadow: none;
 }
 .search-input :deep(.el-input__wrapper:hover) {
   box-shadow: none;
 }
 .search-input :deep(.el-input__wrapper.is-focus) {
-  @apply bg-[#ebebeb];
+  background-color: var(--c-surface-focus);
   box-shadow: none;
 }
 .search-input :deep(.el-input__inner) {
