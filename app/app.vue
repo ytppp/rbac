@@ -1,6 +1,9 @@
 <template>
   <div class="min-h-full">
-    <AppHeader />
-    <NuxtPage />
+    <NuxtLoadingIndicator />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </div>
 </template>
+

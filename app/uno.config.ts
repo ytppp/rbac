@@ -1,17 +1,31 @@
-import { defineConfig, presetUno } from 'unocss'
+import {
+  defineConfig,
+  presetAttributify,
+  presetIcons,
+  presetTypography,
+  presetWind4,
+  presetWebFonts,
+  transformerDirectives,
+  transformerVariantGroup,
+} from 'unocss'
 
-// 内容社区的样式配置。
-// 原来散在 assets/css/main.css 里的颜色变量与基础样式，现在都由这里统一提供。
 export default defineConfig({
-  presets: [presetUno()],
+  // 自定义快捷类
+  shortcuts: {
+    'wh-full': 'w-full h-full',
+    'flex-center': 'flex justify-center items-center',
+    'inline-flex-center': 'inline-flex justify-center items-center',
+    'flex-x-center': 'flex justify-center',
+    'flex-y-center': 'flex items-center',
+    'flex-x-start': 'flex items-center justify-start',
+    'flex-x-between': 'flex items-center justify-between',
+    'flex-x-end': 'flex items-center justify-end',
+  },
   theme: {
-    // 瀑布流按窗口宽度收窄列数，这里定义三个断点供 `max-md/lg/xl:` 变体使用
-    breakpoints: {
-      md: '760px',
-      lg: '1100px',
-      xl: '1500px',
-    },
     colors: {
+      primary: 'var(--el-color-primary)',
+      primary_dark: 'var(--el-color-primary-light-5)',
+      // 之前的
       brand: '#ff2e4d',
       page: '#f5f5f5',
       card: '#ffffff',
@@ -22,22 +36,33 @@ export default defineConfig({
         3: '#9b9b9b',
       },
     },
+    breakpoints: Object.fromEntries(
+      [640, 768, 1024, 1280, 1536, 1920, 2560].map((size, index) => [
+        ['sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl'][index],
+        `${size}px`,
+      ]),
+    ),
   },
-  // 基础样式：等价于原来 main.css 里的 `:root` / `*` / `html,body` / `body`
-  preflights: [
-    {
-      getCSS: () => `
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-          margin: 0;
-          background: #f5f5f5;
-          color: #1f1f1f;
-          font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
-            'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
-          -webkit-font-smoothing: antialiased;
-        }
-      `,
-    },
+  presets: [
+    presetWind4(),
+    presetAttributify(),
+    presetIcons({
+      extraProperties: {
+        display: 'inline-block',
+        'vertical-align': 'middle',
+        width: '1em',
+        height: '1em',
+      },
+      collections: {
+        carbon: () => import('@iconify-json/carbon/icons.json').then((i) => i.default)
+      },
+    }),
+    presetTypography(),
+    presetWebFonts({
+      fonts: {
+        // ...
+      },
+    }),
   ],
+  transformers: [transformerDirectives(), transformerVariantGroup()]
 })

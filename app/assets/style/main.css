@@ -1,0 +1,25 @@
+@import 'element-plus/theme-chalk/dark/css-vars.css';
+
+/* 用品牌红覆盖 Element Plus 主色，让 EP 组件与旧设计保持一致。
+   特意写成 :root:root 提高选择器权重，压过 EP 自身按组件加载的 :root / html.dark 变量 */
+:root:root {
+  --el-color-primary: #ff2e4d;
+  --el-color-primary-light-3: #ff6d82;
+  --el-color-primary-light-5: #ff97a6;
+  --el-color-primary-light-7: #ffc0ca;
+  --el-color-primary-light-8: #ffd5db;
+  --el-color-primary-light-9: #ffe9ed;
+  --el-color-primary-dark-2: #cc253d;
+}
+
+/* html,
+body,
+#__nuxt {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+} */
+
+.content-width {
+  @apply w-full lg:w-8/12 px-4 md:px-0;
+}
