@@ -1,0 +1,67 @@
+@import 'element-plus/theme-chalk/dark/css-vars.css';
+
+/* 品牌红覆盖 Element Plus 主色。
+   写成 :root:root 提高选择器权重，压过 EP 自身按组件加载的 :root 变量 */
+:root:root {
+  --el-color-primary: #ff2e4d;
+  --el-color-primary-light-3: #ff6d82;
+  --el-color-primary-light-5: #ff97a6;
+  --el-color-primary-light-7: #ffc0ca;
+  --el-color-primary-light-8: #ffd5db;
+  --el-color-primary-light-9: #ffe9ed;
+  --el-color-primary-dark-2: #cc253d;
+}
+
+/* 暗黑模式下 EP 的色阶要按深色底重新混合，
+   否则 light-9 这类近白的浅粉会在深色背景上形成刺眼的浅色块 */
+html.dark:root {
+  --el-color-primary: #ff2e4d;
+  --el-color-primary-light-3: #b9263c;
+  --el-color-primary-light-5: #8a2131;
+  --el-color-primary-light-7: #5a1c25;
+  --el-color-primary-light-8: #43191f;
+  --el-color-primary-light-9: #2c171a;
+  --el-color-primary-dark-2: #ff5871;
+}
+
+/* 项目语义色：亮色沿用原设计取值，暗色对齐 Element Plus 深色配色 */
+:root {
+  --c-page: #f5f5f5;
+  --c-card: #ffffff;
+  --c-line: #ededed;
+  --c-ink-1: #1f1f1f;
+  --c-ink-2: #6b6b6b;
+  --c-ink-3: #9b9b9b;
+  --c-surface: #f2f2f2;
+  --c-surface-focus: #ebebeb;
+}
+
+html.dark {
+  --c-page: #0a0a0a;
+  --c-card: #1d1e1f;
+  --c-line: #363637;
+  --c-ink-1: #e5eaf3;
+  --c-ink-2: #cfd3dc;
+  --c-ink-3: #a3a6ad;
+  --c-surface: #262727;
+  --c-surface-focus: #303030;
+  /* 页面底色只在暗黑模式接管，亮色下保持原有白底观感 */
+  background-color: var(--c-page);
+}
+
+/* 全局文字色跟随主题，避免暗黑模式下没有颜色类的文本仍是纯黑 */
+html {
+  color: var(--c-ink-1);
+}
+
+/* html,
+body,
+#__nuxt {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+} */
+
+.content-width {
+  @apply w-full lg:w-8/12 px-4 md:px-0;
+}

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_01_01_000007) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_01_000008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -34,8 +34,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_01_000007) do
     t.integer "sort", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.index ["channel"], name: "index_notes_on_channel"
     t.index ["sort"], name: "index_notes_on_sort"
+    t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
   create_table "permissions", force: :cascade do |t|
@@ -95,12 +97,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_01_01_000007) do
     t.datetime "last_login_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "avatar_url"
     t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true
     t.index ["status"], name: "index_users_on_status"
   end
 
   add_foreign_key "note_likes", "notes", on_delete: :cascade
   add_foreign_key "note_likes", "users", on_delete: :cascade
+  add_foreign_key "notes", "users", on_delete: :nullify
   add_foreign_key "permissions", "permissions", column: "parent_id", on_delete: :restrict
   add_foreign_key "role_permissions", "permissions", on_delete: :cascade
   add_foreign_key "role_permissions", "roles", on_delete: :cascade

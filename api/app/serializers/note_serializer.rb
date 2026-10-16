@@ -10,6 +10,8 @@ class NoteSerializer
         # cover_ratio 为宽/高比值，供前端设置 aspect-ratio，避免瀑布流抖动。
         cover_ratio: note.cover_ratio.to_f.round(4),
         author: note.author_name,
+        # 作者头像：内容关联到真实用户且该用户上传过头像时才有值
+        author_avatar: note.user&.avatar_url,
         avatar_color: note.avatar_color,
         likes: note.likes_count,
         channel: note.channel,

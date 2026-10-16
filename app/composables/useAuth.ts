@@ -13,6 +13,8 @@ export interface AuthUser {
   id: number
   email: string
   name: string
+  /** 头像地址，未上传时为 null（回退到首字母展示） */
+  avatar_url?: string | null
 }
 
 interface LoginResult {

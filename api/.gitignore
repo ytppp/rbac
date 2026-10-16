@@ -19,3 +19,7 @@ tmp/*
 !tmp/pids/.keep
 storage/*
 !storage/.keep
+
+# 用户上传的头像，不入库到 git
+public/uploads/*
+!public/uploads/.gitkeep

@@ -32,6 +32,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-please-change-in-production}
       JWT_EXPIRE_HOURS: 12
+      # 头像等上传文件对外可访问的地址前缀（存进数据库的绝对 URL 用它拼）
+      PUBLIC_API_ORIGIN: ${PUBLIC_API_ORIGIN:-http://localhost:3000}
       # app（3001）与 admin（5173）都是浏览器直连后端，都要放行
       CORS_ORIGINS: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
     ports:

@@ -1,7 +1,15 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
-  css: ['~/assets/css/main.css'],
+  css: ['./assets/style/main.css'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxtjs/i18n',
+    '@unocss/nuxt',
+    '@vueuse/nuxt',
+    '@pinia/nuxt',
+    '@element-plus/nuxt',
+  ],
   runtimeConfig: {
     // SSR 时直连 api 容器，走容器内网，不涉及跨域
     apiServerBase: 'http://localhost:3000/api/v1',
@@ -30,5 +38,18 @@ export default defineNuxtConfig({
       // 容器内 bind mount 的文件变更事件不稳定，开启轮询保证 HMR 可用
       watch: { usePolling: true }
     }
-  }
+  },
+  i18n: {
+    defaultLocale: 'en',
+    locales: [
+      { code: 'en', name: 'English', file: 'en-US.json' },
+      { code: 'zh', name: 'Chinese', file: 'zh-CN.json' },
+    ],
+  },
+  components: [
+    {
+      path: '~/components',
+      pathPrefix: false,
+    },
+  ],
 })

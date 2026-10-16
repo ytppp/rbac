@@ -8,6 +8,8 @@ class UserSerializer
         name: user.name,
         status: user.enabled? ? 1 : 0,
         status_text: user.enabled? ? "启用" : "禁用",
+        # 头像地址，没上传时为 nil（前端回退到首字母）
+        avatar_url: user.avatar_url,
         last_login_at: user.last_login_at&.iso8601,
         created_at: user.created_at.iso8601,
         updated_at: user.updated_at.iso8601

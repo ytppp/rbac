@@ -8,6 +8,8 @@ export interface Note {
   /** 封面宽高比（宽 / 高），图片加载前用它占位，避免瀑布流抖动 */
   cover_ratio: number
   author: string
+  /** 作者头像地址；无头像时为 null，前端回退到「首字 + 底色」 */
+  author_avatar: string | null
   avatar_color: string
   likes: number
   channel: string
@@ -28,8 +30,12 @@ export interface NoteListResult {
   meta: PageMeta
 }
 
-/** 每页条数：不能太大，否则首屏变慢；也不能太小，否则一屏没看几眼就要再拉 */
-const PER_PAGE = 24
+/**
+ * 每页条数：必须明显小于总条数，否则只有一页、无限下拉永远触发不了。
+ * 取 12 既能保证首屏足够高（哨兵不在首屏可视区内，需要滚动才加载下一页），
+ * 又能让现有内容分成多页。
+ */
+const PER_PAGE = 12
 
 /**
  * 内容列表：支持「无限下拉」。

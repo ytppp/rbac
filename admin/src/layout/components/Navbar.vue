@@ -11,7 +11,9 @@
     <el-tag v-if="userStore.isSuperAdmin" type="danger" size="small" effect="plain">超级管理员</el-tag>
     <el-dropdown @command="handleCommand">
       <span class="navbar-user">
-        <el-icon><UserFilled /></el-icon>
+        <!-- 有头像显示头像，没有则维持原来的通用图标 -->
+        <el-avatar v-if="userStore.userInfo?.avatar_url" :src="userStore.userInfo.avatar_url" :size="24" />
+        <el-icon v-else><UserFilled /></el-icon>
         {{ userStore.displayName }}
         <el-icon><ArrowDown /></el-icon>
       </span>

@@ -2,6 +2,27 @@
   <div class="page-container">
     <el-card shadow="never">
       <template #header>
+        <span>头像</span>
+      </template>
+
+      <div class="avatar-row">
+        <el-avatar :size="72" :src="avatarUrl">{{ avatarText }}</el-avatar>
+        <div class="avatar-actions">
+          <el-upload
+            :show-file-list="false"
+            accept="image/png,image/jpeg,image/webp"
+            :before-upload="handleUploadAvatar"
+          >
+            <el-button :loading="submitting">上传头像</el-button>
+          </el-upload>
+          <el-button v-if="avatarUrl" :disabled="submitting" @click="handleRemoveAvatar">删除头像</el-button>
+          <p class="avatar-hint">支持 PNG / JPEG / WebP，不超过 2MB；不设置则显示昵称首字</p>
+        </div>
+      </div>
+    </el-card>
+
+    <el-card shadow="never" class="section-card">
+      <template #header>
         <span>基本资料</span>
       </template>
 
@@ -68,10 +89,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { updatePassword, updateProfile } from '@/api/auth'
+import { removeAvatar, updatePassword, updateProfile, uploadAvatar } from '@/api/auth'
 import { usePermissionStore } from '@/stores/permission'
 import { useUserStore } from '@/stores/user'
 
@@ -80,6 +101,36 @@ const userStore = useUserStore()
 const permissionStore = usePermissionStore()
 
 const submitting = ref(false)
+
+// 有头像就显示图片，没有则回退为昵称首字
+const avatarUrl = computed(() => userStore.userInfo?.avatar_url || undefined)
+const avatarText = computed(() => (userStore.userInfo?.name || 'U').slice(0, 1))
+
+async function handleUploadAvatar(file: File) {
+  submitting.value = true
+  try {
+    userStore.userInfo = await uploadAvatar(file)
+    ElMessage.success('头像已更新')
+  } catch {
+    // 错误提示已统一处理
+  } finally {
+    submitting.value = false
+  }
+  // 返回 false 阻止 el-upload 自身的上传，统一由上面的接口处理
+  return false
+}
+
+async function handleRemoveAvatar() {
+  submitting.value = true
+  try {
+    userStore.userInfo = await removeAvatar()
+    ElMessage.success('头像已删除')
+  } catch {
+    // 错误提示已统一处理
+  } finally {
+    submitting.value = false
+  }
+}
 
 const profileFormRef = ref<FormInstance>()
 const profileForm = reactive({ email: '', name: '' })
@@ -171,5 +222,24 @@ onMounted(async () => {
 
 .tag-gap {
   margin: 0 8px 8px 0;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.avatar-hint {
+  margin: 0;
+  color: #909399;
+  font-size: 12px;
 }
 </style>
