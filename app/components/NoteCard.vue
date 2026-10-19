@@ -1,6 +1,6 @@
 <template>
   <el-card
-    class="note-card mb-16px cursor-pointer break-inside-avoid"
+    class="note-card cursor-pointer"
     shadow="hover"
     :body-style="{ padding: '0' }"
   >

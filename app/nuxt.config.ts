@@ -1,7 +1,8 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
-  css: ['./assets/style/main.css'],
+  // 全局样式：项目语义色变量 + 瀑布流插件自带样式
+  css: ['./assets/style/main.css', 'vue-waterfall-plugin-next/dist/style.css'],
   modules: [
     '@nuxt/eslint',
     '@nuxtjs/i18n',
