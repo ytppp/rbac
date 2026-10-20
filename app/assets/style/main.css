@@ -62,6 +62,7 @@ body,
   margin: 0px;
 } */
 
+/* 顶栏与页面主体共用的容器：改为居中限宽，给三栏布局留出足够宽度 */
 .content-width {
-  @apply w-full lg:w-8/12 px-4 md:px-0;
+  @apply mx-auto w-full max-w-[1400px] px-4;
 }

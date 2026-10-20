@@ -1,56 +1,22 @@
 <template>
   <div class="isolate">
     <app-header />
-    <main class="flex-x-center pt-[90px]">
-      <div class="content-width flex gap-5" style="height: calc(100vh - 90px)">
-        <div class="flex-1">
+    <main class="flex-x-center pt-[82px] pb-40px">
+      <div class="content-width flex gap-4">
+        <div class="min-w-0 flex-1">
           <slot />
         </div>
-        <div class="w-xs" style="height: 80%">
-          <card footer-class="p-2" :border="false">
-            <el-menu class="side-menu">
-              <el-menu-item index="explore">
-                <icon name="i-carbon:explore" />
-                <span>探索</span>
-              </el-menu-item>
-              <el-menu-item index="publish">
-                <icon name="i-carbon:cloud-upload" />
-                <span>发布</span>
-              </el-menu-item>
-              <el-menu-item index="me">
-                <icon name="i-carbon:user-avatar" />
-                <span>我</span>
-              </el-menu-item>
-            </el-menu>
-            <div class="flex-x-center py-5 border-0 border-t border-solid border-line">
-              <el-button type="primary" round>登录</el-button>
-            </div>
-            <template #footer>
-              <div class="flex-y-center gap-2 px-10 py-4">
-                <icon name="i-carbon:list" />
-                <span>更多</span>
-              </div>
-            </template>
-          </card>
-        </div>
+        <!-- 版权、备案等信息：桌面端固定在右侧栏，滚动时跟随视口停靠；移动端改在列表末尾展示（见首页） -->
+        <site-info
+          class="hidden w-52 flex-none lg:block lg:self-start lg:sticky"
+          :class="headerShown ? 'lg:top-66px' : 'lg:top-0'"
+        />
       </div>
     </main>
   </div>
 </template>
 
-<script setup lang="ts"></script>
-
-<style scoped>
-/* 侧栏导航：去掉默认右边框与悬停底色，尺寸贴近旧设计 */
-.side-menu {
-  border-right: none;
-  --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: transparent;
-  --el-menu-item-height: auto;
-}
-.side-menu :deep(.el-menu-item) {
-  @apply flex-y-center gap-2 px-10 py-4 text-14px;
-  height: auto;
-  line-height: 1.5;
-}
-</style>
+<script setup lang="ts">
+// 顶栏可见状态：顶栏隐藏时右栏贴到视口顶部，避免留下 66px 空白
+const headerShown = useState('header-shown', () => true)
+</script>

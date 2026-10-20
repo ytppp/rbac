@@ -1,71 +1,74 @@
 <template>
-  <main>
-    <nav class="sticky top-64px z-15 border-b border-line bg-[rgba(245,245,245,0.94)] dark:bg-[rgba(10,10,10,0.94)] [backdrop-filter:saturate(180%)_blur(12px)]">
-      <div class="mx-auto max-w-[1500px] px-24px max-md:px-16px">
-        <el-tabs v-model="channel" class="channel-tabs" @tab-change="handleChannelChange">
-          <el-tab-pane v-for="item in channels" :key="item" :label="item" :name="item" />
-        </el-tabs>
+  <main class="flex flex-col gap-4 lg:flex-row lg:gap-6">
+    <channel-nav :channels="channels" />
+    <div class="min-w-0 flex-1">
+      <el-alert
+        v-if="error"
+        class="mx-auto mt-60px max-w-[560px]"
+        type="error"
+        title="内容加载失败，请确认 api 服务已启动"
+        :closable="false"
+        show-icon
+      />
+      <section v-else-if="notes.length">
+        <!-- 瀑布流异步懒加载且只在客户端渲染：加载完成前先用骨架屏占位，避免首屏空白 -->
+        <div v-if="!waterfallReady" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <el-skeleton v-for="i in 8" :key="i" animated>
+            <template #template>
+              <el-skeleton-item variant="image" class="!h-160px !w-full !rounded-8px" />
+              <div class="mt-3 space-y-2">
+                <el-skeleton-item variant="text" class="!w-90%" />
+                <el-skeleton-item variant="text" class="!w-60%" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+        <client-only>
+          <component
+            :is="Waterfall"
+            :list="notes"
+            row-key="id"
+            img-selector="cover"
+            background-color="transparent"
+            :has-around-gutter="false"
+            :gutter="16"
+            :breakpoints="waterfallBreakpoints"
+            :animation-cancel="true"
+            @after-render="handleAfterRender"
+          >
+            <template #default="{ item }">
+              <note-card :note="item as Note" />
+            </template>
+          </component>
+        </client-only>
+      </section>
+
+      <div v-else-if="pending" class="flex-y-center justify-center gap-2 py-120px text-14px text-ink-3">
+        <el-icon class="is-loading" :size="16"><icon name="i-carbon:circle-dash" /></el-icon>
+        <span>加载中…</span>
       </div>
-    </nav>
 
-    <el-alert
-      v-if="error"
-      class="mx-auto mt-80px max-w-[560px]"
-      type="error"
-      title="内容加载失败，请确认 api 服务已启动"
-      :closable="false"
-      show-icon
-    />
+      <div v-else class="py-80px">
+        <el-empty description="没有找到相关内容，换个关键词试试" />
+      </div>
 
-    <section
-      v-else-if="notes.length"
-      class="mx-auto max-w-[1500px] px-24px pb-56px pt-16px max-md:px-16px max-md:pb-40px max-md:pt-12px"
-    >
-      <ClientOnly>
-        <component
-          :is="Waterfall"
-          :list="notes"
-          row-key="id"
-          img-selector="cover"
-          background-color="transparent"
-          :has-around-gutter="false"
-          :gutter="16"
-          :breakpoints="waterfallBreakpoints"
-          :animation-cancel="true"
-          @after-render="armSentinel"
-        >
-          <template #default="{ item }">
-            <NoteCard :note="item as Note" />
+      <!-- 无限下拉的「哨兵」：它一滚进视口附近，就自动去加载下一页 -->
+      <div ref="sentinel" class="flex min-h-48px items-center justify-center gap-2 pb-6 text-13px text-ink-3">
+        <template v-if="notes.length">
+          <template v-if="pending">
+            <el-icon class="is-loading" :size="14"><icon name="i-carbon:circle-dash" /></el-icon>
+            <span>正在加载更多…</span>
           </template>
-        </component>
-      </ClientOnly>
-    </section>
-
-    <div v-else-if="pending" class="flex-y-center justify-center gap-2 px-24px py-120px text-14px text-ink-3">
-      <el-icon class="is-loading" :size="16"><icon name="i-carbon:circle-dash" /></el-icon>
-      <span>加载中…</span>
-    </div>
-
-    <div v-else class="py-80px">
-      <el-empty description="没有找到相关内容，换个关键词试试" />
-    </div>
-
-    <!-- 无限下拉的「哨兵」：它一滚进视口附近，就自动去加载下一页 -->
-    <div ref="sentinel" class="flex min-h-48px items-center justify-center gap-2 px-24px pb-24px text-13px text-ink-3">
-      <template v-if="notes.length">
-        <template v-if="pending">
-          <el-icon class="is-loading" :size="14"><icon name="i-carbon:circle-dash" /></el-icon>
-          <span>正在加载更多…</span>
+          <span v-else-if="!hasMore">~我是有底线的~</span>
         </template>
-        <span v-else-if="!hasMore">已经到底啦</span>
-      </template>
+      </div>
+      <site-info class="pt-6 lg:hidden" />
     </div>
   </main>
 </template>
 
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import NoteCard from '~/components/NoteCard.vue'
 import type { Note } from '~/composables/useNotes'
 import { useDebouncedRef, useFeed } from '~/composables/useFeed'
 import { useNotesFeed } from '~/composables/useNotes'
@@ -95,8 +98,16 @@ const waterfallBreakpoints = {
 // IntersectionObserver 是浏览器原生的「元素是否进入视口」观察器：
 // 比监听 scroll 事件更省性能，且能直接判断哨兵位置。
 const sentinel = ref<HTMLElement | null>(null)
+// 瀑布流首次排版完成前为 false，此时用骨架屏占位，避免空白
+const waterfallReady = ref(false)
 let observer: IntersectionObserver | null = null
 let fallbackTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 瀑布流排版完成：关闭骨架屏，并挂上哨兵观察器 */
+function handleAfterRender() {
+  waterfallReady.value = true
+  armSentinel()
+}
 
 /**
  * 挂上哨兵观察器。
@@ -128,6 +139,7 @@ watch(
     if (!len) {
       observer?.disconnect()
       observer = null
+      waterfallReady.value = false
     }
   }
 )
@@ -138,37 +150,4 @@ onBeforeUnmount(() => {
   if (fallbackTimer) clearTimeout(fallbackTimer)
 })
 
-/** 切频道时回到顶部，避免停在上一屏的滚动位置 */
-function handleChannelChange() {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 </script>
-
-<style scoped>
-/* 频道栏：复用 el-tabs，但把外观改回旧设计的红色小圆点下划线 */
-.channel-tabs :deep(.el-tabs__header) {
-  margin: 0;
-}
-/* 隐藏 EP 自带的灰色底边与外层滚动箭头占位，改由外层 nav 提供分割线 */
-.channel-tabs :deep(.el-tabs__nav-wrap) {
-  padding: 0;
-}
-.channel-tabs :deep(.el-tabs__nav-wrap.is-scrollable) {
-  /* padding: 0; */
-}
-.channel-tabs :deep(.el-tabs__nav-wrap::after) {
-  /* display: none; */
-}
-.channel-tabs :deep(.el-tabs__nav-next),
-.channel-tabs :deep(.el-tabs__nav-prev) {
-  display: none;
-}
-/* 频道过多时横向滚动，隐藏滚动条 */
-.channel-tabs :deep(.el-tabs__nav-scroll) {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.channel-tabs :deep(.el-tabs__nav-scroll::-webkit-scrollbar) {
-  display: none;
-}
-</style>

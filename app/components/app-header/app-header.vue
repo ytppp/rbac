@@ -67,6 +67,11 @@ import Headroom from 'headroom.js'
 
 const headerRef = useTemplateRef<HTMLElement>('headerRef')
 let headroomInstance: Headroom | null = null
+
+// 顶栏是否可见：headroom 隐藏/显示时同步给左右栏，
+// 让它们的 sticky 停靠位置跟随变化（顶栏隐藏时贴到视口顶部）
+const headerShown = useState('header-shown', () => true)
+
 const { keyword } = useFeed()
 const { user, token, isLoggedIn, fetchMe, logout } = useAuth()
 
@@ -115,6 +120,11 @@ onMounted(() => {
       // when below offset
       notTop: 'headroom--not-top',
     },
+    // 顶栏固定/隐藏时同步状态，左右栏的 sticky 停靠位置随之调整
+    onPin: () => { headerShown.value = true },
+    onUnpin: () => { headerShown.value = false },
+    onTop: () => { headerShown.value = true },
+    onNotTop: () => { headerShown.value = true },
   })
 
   // 启动 Headroom
