@@ -26,7 +26,7 @@ html.dark:root {
 
 /* 项目语义色：亮色沿用原设计取值，暗色对齐 Element Plus 深色配色 */
 :root {
-  --c-page: #f5f5f5;
+  --c-page: #f0f0f0;
   --c-card: #ffffff;
   --c-line: #ededed;
   --c-ink-1: #1f1f1f;

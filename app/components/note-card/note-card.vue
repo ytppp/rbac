@@ -11,8 +11,8 @@
       <img class="block h-full w-full object-cover" :src="note.cover" :alt="note.title" loading="lazy" />
     </div>
 
-    <div class="px-12px pb-12px pt-10px">
-      <h3 class="mt-0 mb-8px line-clamp-2 text-14px font-500 leading-[1.45]">{{ note.title }}</h3>
+    <div class="px-14px pb-14px pt-12px">
+      <h3 class="mt-0 mb-10px line-clamp-2 text-14px font-500 leading-[1.55] text-ink-1">{{ note.title }}</h3>
 
       <div class="flex items-center justify-between gap-8px">
         <span class="flex min-w-0 items-center gap-6px">
@@ -99,15 +99,17 @@ async function toggleLike() {
 </script>
 
 <style scoped>
-/* 卡片外壳：去掉 el-card 默认的边框与内边距，尺寸贴近旧设计 */
+/* 卡片外壳：去掉 el-card 默认边框，改为常驻轻阴影 + 柔和圆角，hover 时轻微上浮提亮 */
 .note-card {
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  transition: transform 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .note-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
 }
 
 .note-avatar {
