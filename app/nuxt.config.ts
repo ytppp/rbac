@@ -16,7 +16,9 @@ export default defineNuxtConfig({
     apiServerBase: 'http://localhost:3000/api/v1',
     public: {
       // 浏览器直连 api，跨域由后端的 CORS_ORIGINS 放行
-      apiBase: 'http://localhost:3000/api/v1'
+      apiBase: 'http://localhost:3000/api/v1',
+      AMapKey: process.env.AMAP_KEY,
+      AMapSecurityJsCode: process.env.AMAP_SECURITY_JS_CODE,
     }
   },
   app: {
