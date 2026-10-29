@@ -2,15 +2,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
   // 全局样式：项目语义色变量 + 瀑布流插件自带样式
-  css: ['./assets/style/main.css', 'vue-waterfall-plugin-next/dist/style.css'],
-  modules: [
-    '@nuxt/eslint',
-    '@nuxtjs/i18n',
-    '@unocss/nuxt',
-    '@vueuse/nuxt',
-    '@pinia/nuxt',
-    '@element-plus/nuxt',
-  ],
+  css: ['~/assets/style/main.css', 'vue-waterfall-plugin-next/dist/style.css'],
+  typescript: {
+    typeCheck: true,
+  },
   runtimeConfig: {
     // SSR 时直连 api 容器，走容器内网，不涉及跨域
     apiServerBase: 'http://localhost:3000/api/v1',
@@ -21,6 +16,19 @@ export default defineNuxtConfig({
       AMapSecurityJsCode: process.env.AMAP_SECURITY_JS_CODE,
     }
   },
+  modules: [
+    '@nuxt/eslint',
+    '@nuxtjs/i18n',
+    '@unocss/nuxt',
+    '@vueuse/nuxt',
+    '@pinia/nuxt',
+    '@element-plus/nuxt',
+  ],
+  // routeRules: {
+  //   '/': {
+  //     redirect: '/explore',
+  //   },
+  // },
   app: {
     head: {
       title: '发现 - 记录你的生活灵感',
@@ -44,6 +52,7 @@ export default defineNuxtConfig({
   },
   i18n: {
     defaultLocale: 'en',
+    langDir: '../i18n/locales/',
     locales: [
       { code: 'en', name: 'English', file: 'en-US.json' },
       { code: 'zh', name: 'Chinese', file: 'zh-CN.json' },

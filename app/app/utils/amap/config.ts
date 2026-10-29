@@ -3,7 +3,7 @@ import type {
   AMapOptions,
   PickRoutePlanningOptions,
   MarkerConfig,
-} from './amap-extensions..dts'
+} from './amap-extensions'
 
 export const DefaultLoaderOptions: PickAMapLoaderOptions = {
   version: '2.0',
@@ -14,6 +14,7 @@ export const DefaultLoaderOptions: PickAMapLoaderOptions = {
     'AMap.Scale',
     'AMap.HawkEye',
     'AMap.Driving',
+    'AMap.Walking',
     'AMap.Geocoder',
     'AMap.Polyline',
     'AMap.Polygon',

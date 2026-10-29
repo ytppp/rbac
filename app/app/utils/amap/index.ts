@@ -5,13 +5,37 @@ import type {
   RoutePlanningOptions,
   MarkerConfig,
   SearchOptions,
-} from './amap-extensions.d'
+  TripSegment,
+  TripSegmentResult,
+  TransportType,
+} from './amap-extensions'
 import {
   DefaultLoaderOptions,
   DefaultMapOptions,
   DefaultMarkerConfig,
   DefaultRoutePlanningOptions,
 } from './config'
+
+// 各交通方式的默认折线颜色与图标（图标类名见 uno.config.ts 的 safelist）
+const TRIP_STYLE: Record<TransportType, { color: string; icon: string }> = {
+  plane: { color: '#2563eb', icon: 'i-carbon:plane' },
+  driving: { color: '#16a34a', icon: 'i-carbon:car' },
+  walking: { color: '#ea580c', icon: 'i-carbon:pedestrian' },
+}
+
+// 秒 -> 可读耗时
+const formatDuration = (seconds?: number): string => {
+  if (!seconds || seconds <= 0) {
+    return ''
+  }
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) {
+    return `${minutes}分钟`
+  }
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest ? `${hours}小时${rest}分钟` : `${hours}小时`
+}
 
 /**
  * 高德地图自定义 Hook
@@ -32,6 +56,8 @@ export default class AMapUtils {
   private polygons: Map<string, AMap.Polygon> = new Map()
   private eventListeners: Map<string, any> = new Map()
   private driving: any = null
+  // 行程段产生的覆盖物（折线、交通图标、耗时标注），用于整体清理
+  private tripOverlays: any[] = []
 
   /**
    * 构造函数
@@ -406,6 +432,189 @@ export default class AMapUtils {
   }
 
   /**
+   * 调用高德路线规划服务，仅取路径与耗时（不传 map，避免自动在地图上绘制）
+   * @param mode 交通方式
+   */
+  private async planningRoute(
+    mode: 'driving' | 'walking',
+    origin: AMap.LngLat,
+    destination: AMap.LngLat,
+  ): Promise<{ path: AMap.LngLat[]; duration?: number; distance?: number }> {
+    const Service = mode === 'driving' ? this.AMap.Driving : this.AMap.Walking
+    if (!Service) {
+      throw new Error(`高德地图 ${mode} 服务不可用，请检查 plugins 配置`)
+    }
+    const service = new Service({ hideMarkers: true })
+    return new Promise((resolve, reject) => {
+      service.search(origin, destination, (status: string, result: any) => {
+        if (status !== 'complete') {
+          return reject(new Error(`${mode} 路线规划失败: ${status}`))
+        }
+        const route = result?.routes?.[0]
+        if (!route) {
+          return reject(new Error(`${mode} 路线规划无结果`))
+        }
+        const path: AMap.LngLat[] = []
+        route.steps?.forEach((step: any) => {
+          step.path?.forEach((point: any) => path.push(point))
+        })
+        resolve({ path, duration: route.time, distance: route.distance })
+      })
+    })
+  }
+
+  /**
+   * 规划单个行程段
+   * 航班高德无对应接口，退化为起点到终点的直线且不返回耗时
+   */
+  async planTripSegment(segment: TripSegment): Promise<TripSegmentResult> {
+    if (!this.AMap) {
+      await this.initMap()
+    }
+    const origin = new this.AMap.LngLat(segment.origin.lng, segment.origin.lat)
+    const destination = new this.AMap.LngLat(segment.destination.lng, segment.destination.lat)
+
+    // 外部直接给了路径，或该方式无接口（航班），走直线
+    if (segment.path?.length) {
+      return {
+        type: segment.type,
+        path: segment.path.map(([lng, lat]) => new this.AMap.LngLat(lng, lat)),
+        duration: segment.duration,
+      }
+    }
+    if (segment.type === 'plane') {
+      return {
+        type: 'plane',
+        path: [origin, destination],
+        duration: segment.duration,
+      }
+    }
+
+    const planned = await this.planningRoute(segment.type, origin, destination)
+    return { type: segment.type, ...planned, duration: segment.duration ?? planned.duration }
+  }
+
+  /**
+   * 交通方式图标（放在起点与终点连线的中点）
+   */
+  private createTransportContent(type: TransportType): string {
+    const style = TRIP_STYLE[type]
+    return `
+      <div style="
+        display:flex;align-items:center;justify-content:center;
+        width:32px;height:32px;border-radius:9999px;
+        background:${style.color};color:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,.25);
+        font-size:20px;
+      ">
+        <span class="${style.icon}"></span>
+      </div>
+    `
+  }
+
+  /**
+   * 绘制完整行程：每段折线 + 折线中点交通图标 + 耗时标注
+   * @param segments 行程段列表，按顺序排列
+   */
+  async drawTrip(segments: TripSegment[]): Promise<TripSegmentResult[]> {
+    this.clearTrip()
+    if (!this.AMap || !this.map || !segments.length) {
+      return []
+    }
+    const results: TripSegmentResult[] = []
+
+    for (const segment of segments) {
+      let planned: TripSegmentResult
+      try {
+        planned = await this.planTripSegment(segment)
+      } catch (error) {
+        console.error(`行程段（${segment.type}）规划失败，退化为直线:`, error)
+        planned = {
+          type: segment.type,
+          path: [
+            new this.AMap.LngLat(segment.origin.lng, segment.origin.lat),
+            new this.AMap.LngLat(segment.destination.lng, segment.destination.lat),
+          ],
+          duration: segment.duration,
+        }
+      }
+      if (!planned.path.length) {
+        continue
+      }
+
+      const style = TRIP_STYLE[segment.type]
+      const polyline = new this.AMap.Polyline({
+        path: planned.path,
+        strokeColor: segment.color || style.color,
+        strokeWeight: 5,
+        // 已完成实线、未完成虚线
+        strokeStyle: segment.completed ? 'solid' : 'dashed',
+        lineJoin: 'round',
+        zIndex: 100,
+      })
+      this.map.add(polyline)
+      this.tripOverlays.push(polyline)
+
+      // 交通图标放在起点与终点连线的中点
+      const iconPosition = new this.AMap.LngLat(
+        (segment.origin.lng + segment.destination.lng) / 2,
+        (segment.origin.lat + segment.destination.lat) / 2,
+      )
+      const marker = new this.AMap.Marker({
+        position: iconPosition,
+        content: this.createTransportContent(segment.type),
+        offset: new this.AMap.Pixel(-16, -16),
+        cursor: 'default',
+        zIndex: 160,
+      })
+      this.map.add(marker)
+      this.tripOverlays.push(marker)
+
+      // 高德提供了耗时才标注，航班无接口故默认不标
+      const label = formatDuration(planned.duration)
+      if (label) {
+        const text = new this.AMap.Text({
+          text: label,
+          // 耗时标注放在该段终点位置
+          position: new this.AMap.LngLat(segment.destination.lng, segment.destination.lat),
+          anchor: 'bottom-center',
+          offset: new this.AMap.Pixel(0, -8),
+          zIndex: 170,
+          style: {
+            'background-color': '#ffffff',
+            border: `1px solid ${segment.color || style.color}`,
+            'border-radius': '6px',
+            'box-shadow': '0 2px 8px rgba(0,0,0,.15)',
+            padding: '2px 8px',
+            'font-size': '12px',
+            'line-height': '18px',
+            color: '#111827',
+            'white-space': 'nowrap',
+          },
+        })
+        this.map.add(text)
+        this.tripOverlays.push(text)
+      }
+
+      results.push(planned)
+    }
+
+    this.setFitView()
+    return results
+  }
+
+  /**
+   * 清除行程相关的所有覆盖物（不影响其它标记与折线）
+   */
+  clearTrip(): void {
+    if (!this.tripOverlays.length) {
+      return
+    }
+    this.map?.remove(this.tripOverlays)
+    this.tripOverlays = []
+  }
+
+  /**
    * 行政区划查询
    * @param keyword 搜索关键词
    * @param level 查询级别，默认district
@@ -516,6 +725,7 @@ export default class AMapUtils {
     this.markers.clear()
     this.polylines.clear()
     this.polygons.clear()
+    this.tripOverlays = []
     this.map.clearMap()
   }
 

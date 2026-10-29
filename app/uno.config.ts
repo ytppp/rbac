@@ -10,6 +10,8 @@ import {
 } from 'unocss'
 
 export default defineConfig({
+  // 这些图标类名只在 JS 字符串里拼接，显式加入安全列表
+  safelist: ['i-carbon:plane', 'i-carbon:car', 'i-carbon:pedestrian'],
   // 自定义快捷类
   shortcuts: {
     'wh-full': 'w-full h-full',

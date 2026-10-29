@@ -7,6 +7,7 @@ type AMapPlugin =
   | 'AMap.Scale'
   | 'AMap.HawkEye'
   | 'AMap.Driving'
+  | 'AMap.Walking'
   | 'AMap.Geocoder'
   | 'AMap.Polyline'
   | 'AMap.Polygon'
@@ -108,6 +109,8 @@ export interface AMapOptions extends AMap.MapOptions {
 }
 
 export interface RoutePlanningOptions {
+  // 交通方式
+  type: TransportType
   origin: AMap.LngLat
   destination: AMap.LngLat
   waypoints?: AMap.LngLat[] // 途经点，最多 20 个
@@ -119,6 +122,42 @@ export interface RoutePlanningOptions {
 }
 
 export type PickRoutePlanningOptions = Omit<RoutePlanningOptions, 'origin' | 'destination'>
+
+// 行程段的交通方式
+export type TransportType = 'plane' | 'driving' | 'walking'
+
+// 位置点信息
+export interface MapPoint {
+  lng: number
+  lat: number
+  name?: string
+  desc?: string
+}
+
+export interface TripSegment {
+  type: TransportType
+  // 起点
+  origin: MapPoint
+  // 终点
+  destination: MapPoint
+  // 直接指定折线路径（如航班航迹），不传则按 type 走高德路线规划
+  path?: [number, number][]
+  // 已知道的耗时（秒），优先于接口返回的耗时
+  duration?: number
+  // 折线颜色，缺省按交通方式取默认色
+  color?: string
+  // 该段是否已完成：已完成实线，未完成虚线
+  completed?: boolean
+}
+
+export interface TripSegmentResult {
+  type: TransportType
+  path: AMap.LngLat[]
+  // 耗时（秒）。高德未提供航班耗时时为空
+  duration?: number
+  // 距离（米）。航班段为空
+  distance?: number
+}
 
 export type MarkerType = 'start' | 'end' | 'via'
 export interface MarkExtData {

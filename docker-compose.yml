@@ -71,6 +71,7 @@ services:
       context: ./app
     container_name: rbac-app
     restart: unless-stopped
+    env_file: ./app/.env
     environment:
       # SSR 走容器内网直连 api；浏览器走宿主机地址（api 已放行 3001）
       NUXT_API_SERVER_BASE: http://api:3000/api/v1
