@@ -320,7 +320,6 @@ const renderPoints = (points: MapPoint[]) => {
   resetForm()
   utils.cleanMarkers()
   utils.clearPolyline()
-  utils.clearDriving()
   lineId.value = null
   if (!points.length) {
     return
@@ -363,7 +362,6 @@ const planRouteAndPolyline = () => {
 
     // 如果标记点少于2个，清除路线并返回
     if (allMarkersPos.length < 2) {
-      aMapUtils.value?.clearDriving()
       aMapUtils.value?.clearPolyline()
       lineId.value = null
       return
@@ -384,6 +382,7 @@ const planRouteAndPolyline = () => {
     })
     aMapUtils.value
       ?.routePlanning({
+        type: 'driving',
         origin: origin!,
         destination: destination!,
         waypoints: allMarkersPos.slice(1, allMarkersPos.length - 1),

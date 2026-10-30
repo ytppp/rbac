@@ -55,7 +55,6 @@ export default class AMapUtils {
   // 地图上的多边形
   private polygons: Map<string, AMap.Polygon> = new Map()
   private eventListeners: Map<string, any> = new Map()
-  private driving: any = null
   // 行程段产生的覆盖物（折线、交通图标、耗时标注），用于整体清理
   private tripOverlays: any[] = []
 
@@ -402,13 +401,16 @@ export default class AMapUtils {
     if (!this.AMap) {
       await this.initMap()
     }
-    if (!this.driving) {
-      this.driving = new this.AMap.Driving({
-        map: this.map,
-        ...DefaultRoutePlanningOptions,
-        ...options,
-      })
+    const mode = options.type
+    const Service = mode === 'driving' ? this.AMap.Driving : this.AMap.Walking
+    if (!Service) {
+      throw new Error(`高德地图 ${mode} 服务不可用，请检查 plugins 配置`)
     }
+    const service = new Service({
+      map: this.map,
+      ...DefaultRoutePlanningOptions,
+      ...options,
+    })
     if (!options.waypoints || !options.waypoints.length) {
       options.waypoints = []
     }
@@ -416,56 +418,30 @@ export default class AMapUtils {
       if (!options.origin || !options.destination || options.origin.equals(options.destination)) {
         return reject(new Error('必须设置起点与终点,且起点与终点不能相同'))
       }
-      this.driving.search(
+      service.search(
         options.origin,
         options.destination,
         { waypoints: options.waypoints },
         (status: string, result: AMap.RouteResult) => {
-          if (status === 'complete') {
-            resolve(result)
-          } else {
-            reject(new Error(`路线规划失败: ${status}`))
+          if (status !== 'complete') {
+            return reject(new Error(`${mode} 路线规划失败: ${status}`))
           }
+          const route = result?.routes?.[0]
+          if (!route) {
+            return reject(new Error(`${mode} 路线规划无结果`))
+          }
+          const path: AMap.LngLat[] = []
+          route.steps?.forEach((step: any) => {
+            step.path?.forEach((point: any) => path.push(point))
+          })
+          resolve({ ...result, path, duration: route.time, distance: route.distance })
         },
       )
     })
   }
 
   /**
-   * 调用高德路线规划服务，仅取路径与耗时（不传 map，避免自动在地图上绘制）
-   * @param mode 交通方式
-   */
-  private async planningRoute(
-    mode: 'driving' | 'walking',
-    origin: AMap.LngLat,
-    destination: AMap.LngLat,
-  ): Promise<{ path: AMap.LngLat[]; duration?: number; distance?: number }> {
-    const Service = mode === 'driving' ? this.AMap.Driving : this.AMap.Walking
-    if (!Service) {
-      throw new Error(`高德地图 ${mode} 服务不可用，请检查 plugins 配置`)
-    }
-    const service = new Service({ hideMarkers: true })
-    return new Promise((resolve, reject) => {
-      service.search(origin, destination, (status: string, result: any) => {
-        if (status !== 'complete') {
-          return reject(new Error(`${mode} 路线规划失败: ${status}`))
-        }
-        const route = result?.routes?.[0]
-        if (!route) {
-          return reject(new Error(`${mode} 路线规划无结果`))
-        }
-        const path: AMap.LngLat[] = []
-        route.steps?.forEach((step: any) => {
-          step.path?.forEach((point: any) => path.push(point))
-        })
-        resolve({ path, duration: route.time, distance: route.distance })
-      })
-    })
-  }
-
-  /**
    * 规划单个行程段
-   * 航班高德无对应接口，退化为起点到终点的直线且不返回耗时
    */
   async planTripSegment(segment: TripSegment): Promise<TripSegmentResult> {
     if (!this.AMap) {
@@ -490,7 +466,11 @@ export default class AMapUtils {
       }
     }
 
-    const planned = await this.planningRoute(segment.type, origin, destination)
+    const planned = await this.routePlanning({
+      type: segment.type,
+      origin,
+      destination,
+    })
     return { type: segment.type, ...planned, duration: segment.duration ?? planned.duration }
   }
 
@@ -709,11 +689,6 @@ export default class AMapUtils {
     const polygonsArr = Array.from(this.polygons.values())
     this.map.remove(polygonsArr)
     this.polygons.clear()
-  }
-
-  clearDriving(): void {
-    if (!this.map) return
-    this.driving?.clear()
   }
 
   /**

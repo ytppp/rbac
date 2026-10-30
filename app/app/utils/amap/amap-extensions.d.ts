@@ -64,6 +64,9 @@ declare global {
       routes: AMap.DrivingRoute[] // 驾车路线数组
       origin: AMap.LngLat // 规划起点坐标
       destination: AMap.LngLat // 规划终点坐标
+      path: AMap.LngLat[] // 路线坐标数组
+      duration: number // 路线耗时，单位：秒
+      distance: number // 路线距离，单位：米
     }
 
     // 工具类用到的自定义接口
