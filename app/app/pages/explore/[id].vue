@@ -7,11 +7,16 @@
       <div>图片轮播</div>
       <div>内容</div>
     </div>
+    <!-- 版权信息放在地图下方，宽度与首页「瀑布流 + 版权」一致 -->
+    <site-info class="mt-6" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { TripSegment } from '~/utils/amap/amap-extensions'
+
+// 版权信息改到页面底部展示，隐藏布局右侧的固定栏
+definePageMeta({ hideSiteInfo: true })
 
 const trip: TripSegment[] = [
   {
