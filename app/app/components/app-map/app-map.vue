@@ -1,8 +1,10 @@
 <template>
   <div class="relative w-full h-full">
     <div id="map" class="w-full h-full"/>
+    <!-- 手动打点操作说明：展示行程时隐藏，避免遮住地图上的行程内容 -->
     <div
-      class="absolute top-[10px] left-2 flex-x-between mx-auto py-2 px-3 w-[30%] bg-black opacity-60 rounded-md shadow-xl text-white"
+      v-if="!trip.length"
+      class="absolute top-[10px] left-2 flex-x-between mx-auto py-2 px-3 w-[30%] bg-black opacity-60 rounded-md shadow-xl text-white pointer-events-none"
     >
       <div>
         <h3 class="text-sm font-bold p-0 m-0">{{ $t('trans0002') }}</h3>
@@ -309,7 +311,7 @@ const updateLastMarkerTypeToVia = (markers: [string, AMap.Marker][]) => {
 }
 
 // 渲染外部传入的位置点：清空已有覆盖物后按 起点/途经点/终点 重建并规划路线
-const renderPoints = (points: MapPoint[]) => {
+const renderPoints = async (points: MapPoint[]) => {
   const utils = aMapUtils.value
   const amap = utils?.getAMap()
   if (!utils || !amap) {
@@ -343,20 +345,22 @@ const renderPoints = (points: MapPoint[]) => {
       onDblClick: handleMarkerDblClick,
     })
   })
-  planRouteAndPolyline()
+  await planRouteAndPolyline()
   utils.setFitView()
 }
 
-// 渲染外部传入的行程：每段折线 + 折线中点交通图标 + 高德返回的耗时标注
+// 渲染外部传入的行程：每段折线 + 折线中点交通工具图标（含耗时）+ 起终点/途经点标记
 const renderTrip = async (segments: TripSegment[]) => {
   const utils = aMapUtils.value
   if (!utils) {
     return
   }
-  await utils.drawTrip(segments)
+  await utils.drawTrip(segments, (type) =>
+    createMarkerContent({ name: '', type, isEdit: false }),
+  )
 }
 
-const planRouteAndPolyline = () => {
+const planRouteAndPolyline = async () => {
   try {
     const allMarkersPos = getMarkersPos()
 
@@ -376,26 +380,21 @@ const planRouteAndPolyline = () => {
       lineId.value = `polyline_${Date.now()}_${Math.random()}`
     }
 
-    // 绘制驾车折线
-    aMapUtils.value?.addPolyline(allMarkersPos, {
-      id: lineId.value!,
+    // 让高德只返回规划结果，折线由下面按真实路径绘制，避免“直线 + 路网线”叠两条
+    const result = await aMapUtils.value?.routePlanning({
+      type: 'driving',
+      origin: origin!,
+      destination: destination!,
+      waypoints: allMarkersPos.slice(1, allMarkersPos.length - 1),
+      drawOnMap: false,
     })
-    aMapUtils.value
-      ?.routePlanning({
-        type: 'driving',
-        origin: origin!,
-        destination: destination!,
-        waypoints: allMarkersPos.slice(1, allMarkersPos.length - 1),
-      })
-      .then(() => {
-        // 路线规划成功后的处理
-        console.log('路线规划成功')
-      })
-      .catch((error) => {
-        console.error('路线规划失败:', error)
-      })
+    const path = result?.path
+    if (path?.length) {
+      aMapUtils.value?.addPolyline(path, { id: lineId.value! })
+      console.log('路线规划成功')
+    }
   } catch (error) {
-    console.error('规划路线和绘制折线失败:', error)
+    console.error('路线规划失败:', error)
   }
 }
 

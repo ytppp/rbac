@@ -122,9 +122,24 @@ export interface RoutePlanningOptions {
   province?: string // 车牌省份的汉字缩写，用于判断是否限行，与number属性组合使用，可选。例如：京
   number?: string // 除省份之外车牌的字母和数字，用于判断限行相关，与province属性组合使用，可选。例如:NH1N11
   hideMarkers?: boolean // 是否隐藏默认起始标记点
+  // 是否由高德服务自动在地图上绘制路线，默认 true；行程自绘折线时传 false，避免重复画两条
+  drawOnMap?: boolean
 }
 
-export type PickRoutePlanningOptions = Omit<RoutePlanningOptions, 'origin' | 'destination'>
+export type PickRoutePlanningOptions = Omit<
+  RoutePlanningOptions,
+  'type' | 'origin' | 'destination'
+>
+
+// 路线规划结果（在高德原始结果上补充拆解后的路径与耗时）
+export interface RoutePlanningResult extends AMap.RouteResult {
+  // 规划出的完整路径点
+  path: AMap.LngLat[]
+  // 耗时（秒）
+  duration?: number
+  // 距离（米）
+  distance?: number
+}
 
 // 行程段的交通方式
 export type TransportType = 'plane' | 'driving' | 'walking'

@@ -3,7 +3,10 @@ import type {
   AMapLoaderOptions,
   PartialAMapLoaderOptions,
   RoutePlanningOptions,
+  RoutePlanningResult,
   MarkerConfig,
+  MarkerType,
+  MapPoint,
   SearchOptions,
   TripSegment,
   TripSegmentResult,
@@ -55,8 +58,10 @@ export default class AMapUtils {
   // 地图上的多边形
   private polygons: Map<string, AMap.Polygon> = new Map()
   private eventListeners: Map<string, any> = new Map()
-  // 行程段产生的覆盖物（折线、交通图标、耗时标注），用于整体清理
+  // 行程段产生的覆盖物（折线、交通图标、耗时气泡），用于整体清理
   private tripOverlays: any[] = []
+  // 行程绘制序号：用于作废在途的旧绘制，避免并发叠加
+  private tripSeq = 0
 
   /**
    * 构造函数
@@ -397,46 +402,52 @@ export default class AMapUtils {
    * @param options 路线规划选项
    * @returns Promise<AMap.RouteResult>
    */
-  async routePlanning(options: RoutePlanningOptions): Promise<AMap.RouteResult> {
+  async routePlanning(options: RoutePlanningOptions): Promise<RoutePlanningResult> {
     if (!this.AMap) {
       await this.initMap()
     }
-    const mode = options.type
+    const {
+      type: mode,
+      origin,
+      destination,
+      waypoints = [],
+      drawOnMap = true,
+      ...rest
+    } = options
     const Service = mode === 'driving' ? this.AMap.Driving : this.AMap.Walking
     if (!Service) {
       throw new Error(`高德地图 ${mode} 服务不可用，请检查 plugins 配置`)
     }
     const service = new Service({
-      map: this.map,
+      // 不传 map 时服务只返回规划数据，不会在地图上再画一条
+      ...(drawOnMap ? { map: this.map } : {}),
       ...DefaultRoutePlanningOptions,
-      ...options,
+      ...rest,
     })
-    if (!options.waypoints || !options.waypoints.length) {
-      options.waypoints = []
-    }
     return new Promise((resolve, reject) => {
-      if (!options.origin || !options.destination || options.origin.equals(options.destination)) {
+      if (!origin || !destination || origin.equals(destination)) {
         return reject(new Error('必须设置起点与终点,且起点与终点不能相同'))
       }
-      service.search(
-        options.origin,
-        options.destination,
-        { waypoints: options.waypoints },
-        (status: string, result: AMap.RouteResult) => {
-          if (status !== 'complete') {
-            return reject(new Error(`${mode} 路线规划失败: ${status}`))
-          }
-          const route = result?.routes?.[0]
-          if (!route) {
-            return reject(new Error(`${mode} 路线规划无结果`))
-          }
-          const path: AMap.LngLat[] = []
-          route.steps?.forEach((step: any) => {
-            step.path?.forEach((point: any) => path.push(point))
-          })
-          resolve({ ...result, path, duration: route.time, distance: route.distance })
-        },
-      )
+      const onComplete = (status: string, result: AMap.RouteResult) => {
+        if (status !== 'complete') {
+          return reject(new Error(`${mode} 路线规划失败: ${status}`))
+        }
+        const route = result?.routes?.[0]
+        if (!route) {
+          return reject(new Error(`${mode} 路线规划无结果`))
+        }
+        const path: AMap.LngLat[] = []
+        route.steps?.forEach((step: any) => {
+          step.path?.forEach((point: any) => path.push(point))
+        })
+        resolve({ ...result, path, duration: route.time, distance: route.distance })
+      }
+      // 步行接口只接受 (origin, destination, callback)，多传参数会丢回调
+      if (mode === 'driving') {
+        service.search(origin, destination, { waypoints }, onComplete)
+      } else {
+        service.search(origin, destination, onComplete)
+      }
     })
   }
 
@@ -470,123 +481,236 @@ export default class AMapUtils {
       type: segment.type,
       origin,
       destination,
+      // 行程自己按完成状态画折线（实线/虚线），不让服务再画一条
+      drawOnMap: false,
     })
     return { type: segment.type, ...planned, duration: segment.duration ?? planned.duration }
   }
 
   /**
-   * 交通方式图标（放在起点与终点连线的中点）
+   * 交通工具图标：小圆标，压在两点直线上
    */
-  private createTransportContent(type: TransportType): string {
+  private createTransportIcon(type: TransportType): string {
     const style = TRIP_STYLE[type]
     return `
       <div style="
         display:flex;align-items:center;justify-content:center;
-        width:32px;height:32px;border-radius:9999px;
+        width:20px;height:20px;border-radius:9999px;
         background:${style.color};color:#fff;
-        box-shadow:0 2px 8px rgba(0,0,0,.25);
-        font-size:20px;
-      ">
-        <span class="${style.icon}"></span>
-      </div>
+        box-shadow:0 1px 4px rgba(0,0,0,.35);
+      "><span class="${style.icon}" style="font-size:12px;line-height:1;"></span></div>
     `
   }
 
   /**
-   * 绘制完整行程：每段折线 + 折线中点交通图标 + 耗时标注
-   * @param segments 行程段列表，按顺序排列
+   * 耗时小标签：贴在交通工具图标右侧，不压线
    */
-  async drawTrip(segments: TripSegment[]): Promise<TripSegmentResult[]> {
+  private createTimeLabel(type: TransportType, label: string): string {
+    const style = TRIP_STYLE[type]
+    return `
+      <div style="
+        padding:1px 7px;border-radius:9999px;
+        background:#ffffff;color:#111827;
+        border:1px solid ${style.color};
+        font-size:12px;line-height:16px;white-space:nowrap;
+        box-shadow:0 1px 4px rgba(0,0,0,.18);
+      ">${label}</div>
+    `
+  }
+
+  /**
+   * 行程点位序列：首段起点、末段终点，中间衔接点为途经点（连续相同坐标只保留一个）
+   */
+  private getTripPoints(segments: TripSegment[]): { point: MapPoint; type: MarkerType }[] {
+    const raw: MapPoint[] = [segments[0]!.origin, ...segments.map((item) => item.destination)]
+    const deduped = raw.filter(
+      (point, index) => index === 0 || !this.isSamePoint(point, raw[index - 1]!),
+    )
+    return deduped.map((point, index) => {
+      const type: MarkerType =
+        index === 0 ? 'start' : index === deduped.length - 1 ? 'end' : 'via'
+      return { point, type }
+    })
+  }
+
+  private isSamePoint(a: MapPoint, b: MapPoint): boolean {
+    return Math.abs(a.lng - b.lng) < 1e-6 && Math.abs(a.lat - b.lat) < 1e-6
+  }
+
+  /**
+   * 绘制完整行程：每段画两条线（两点直线 + 行程规划线），
+   * 交通工具图标与耗时挂在两点直线上，已完成实线、未完成虚线
+   * @param segments 行程段列表，按顺序排列
+   * @param pointContent 行程点位（start/end/via）的图标 HTML，由调用方决定样式
+   */
+  async drawTrip(
+    segments: TripSegment[],
+    pointContent?: (type: MarkerType) => string,
+  ): Promise<TripSegmentResult[]> {
     this.clearTrip()
     if (!this.AMap || !this.map || !segments.length) {
       return []
     }
+    const seq = this.tripSeq
     const results: TripSegmentResult[] = []
+    const fitPoints: AMap.LngLat[] = []
 
     for (const segment of segments) {
-      let planned: TripSegmentResult
+      const start = new this.AMap.LngLat(segment.origin.lng, segment.origin.lat)
+      const end = new this.AMap.LngLat(segment.destination.lng, segment.destination.lat)
+      const linePath = [start, end]
+
+      // 行程规划线（沿道路/步道），航班无规划接口，只有直线
+      let planned: TripSegmentResult | undefined
       try {
         planned = await this.planTripSegment(segment)
       } catch (error) {
-        console.error(`行程段（${segment.type}）规划失败，退化为直线:`, error)
-        planned = {
-          type: segment.type,
-          path: [
-            new this.AMap.LngLat(segment.origin.lng, segment.origin.lat),
-            new this.AMap.LngLat(segment.destination.lng, segment.destination.lat),
-          ],
-          duration: segment.duration,
-        }
+        console.error(`行程段（${segment.type}）规划失败，仅画直线:`, error)
       }
-      if (!planned.path.length) {
-        continue
+      // 等待期间若有新的绘制或清理，本次结果作废
+      if (seq !== this.tripSeq) {
+        return []
       }
+      const routePath = planned?.path ?? []
+      const hasRoute = routePath.length > 2
 
       const style = TRIP_STYLE[segment.type]
-      const polyline = new this.AMap.Polyline({
-        path: planned.path,
-        strokeColor: segment.color || style.color,
-        strokeWeight: 5,
-        // 已完成实线、未完成虚线
-        strokeStyle: segment.completed ? 'solid' : 'dashed',
-        lineJoin: 'round',
-        zIndex: 100,
-      })
-      this.map.add(polyline)
-      this.tripOverlays.push(polyline)
+      const color = segment.color || style.color
+      const strokeStyle = segment.completed ? 'solid' : 'dashed'
+      // 未完成段降低不透明度，弱化存在感
+      const strokeOpacity = segment.completed ? 1 : 0.55
 
-      // 交通图标放在起点与终点连线的中点
-      const iconPosition = new this.AMap.LngLat(
-        (segment.origin.lng + segment.destination.lng) / 2,
-        (segment.origin.lat + segment.destination.lat) / 2,
-      )
-      const marker = new this.AMap.Marker({
-        position: iconPosition,
-        content: this.createTransportContent(segment.type),
-        offset: new this.AMap.Pixel(-16, -16),
+      // 点击某段时把视野放大到这一段，便于看清短途段
+      const focusSegment = () => this.fitPoints([...linePath, ...routePath])
+
+      // 线 1：行程规划线（主视觉）
+      if (hasRoute) {
+        const routePolyline = new this.AMap.Polyline({
+          path: routePath,
+          strokeColor: color,
+          strokeWeight: 4,
+          strokeStyle,
+          strokeOpacity,
+          lineJoin: 'round',
+          cursor: 'pointer',
+          clickable: true,
+          zIndex: 100,
+        })
+        routePolyline.on('click', focusSegment)
+        this.map.add(routePolyline)
+        this.tripOverlays.push(routePolyline)
+      }
+
+      // 线 2：两点直线（方向示意，细且淡）
+      const linePolyline = new this.AMap.Polyline({
+        path: linePath,
+        strokeColor: color,
+        strokeWeight: 1.5,
+        strokeStyle,
+        strokeOpacity: hasRoute ? strokeOpacity * 0.4 : strokeOpacity,
+        lineJoin: 'round',
+        cursor: 'pointer',
+        clickable: true,
+        zIndex: 105,
+      })
+      linePolyline.on('click', focusSegment)
+      this.map.add(linePolyline)
+      this.tripOverlays.push(linePolyline)
+
+      // 交通工具图标放在两点连线中点
+      const midLng = (segment.origin.lng + segment.destination.lng) / 2
+      const midLat = (segment.origin.lat + segment.destination.lat) / 2
+      const midPoint = new this.AMap.LngLat(midLng, midLat)
+      const iconMarker = new this.AMap.Marker({
+        position: midPoint,
+        anchor: 'center',
+        content: this.createTransportIcon(segment.type),
         cursor: 'default',
         zIndex: 160,
       })
-      this.map.add(marker)
-      this.tripOverlays.push(marker)
+      this.map.add(iconMarker)
+      this.tripOverlays.push(iconMarker)
 
-      // 高德提供了耗时才标注，航班无接口故默认不标
-      const label = formatDuration(planned.duration)
+      // 耗时小标签贴在图标右侧
+      const label = formatDuration(segment.duration ?? planned?.duration)
       if (label) {
-        const text = new this.AMap.Text({
-          text: label,
-          // 耗时标注放在该段终点位置
-          position: new this.AMap.LngLat(segment.destination.lng, segment.destination.lat),
-          anchor: 'bottom-center',
-          offset: new this.AMap.Pixel(0, -8),
-          zIndex: 170,
-          style: {
-            'background-color': '#ffffff',
-            border: `1px solid ${segment.color || style.color}`,
-            'border-radius': '6px',
-            'box-shadow': '0 2px 8px rgba(0,0,0,.15)',
-            padding: '2px 8px',
-            'font-size': '12px',
-            'line-height': '18px',
-            color: '#111827',
-            'white-space': 'nowrap',
-          },
+        const labelMarker = new this.AMap.Marker({
+          position: midPoint,
+          offset: new this.AMap.Pixel(12, -9),
+          cursor: 'default',
+          content: this.createTimeLabel(segment.type, label),
+          zIndex: 160,
         })
-        this.map.add(text)
-        this.tripOverlays.push(text)
+        this.map.add(labelMarker)
+        this.tripOverlays.push(labelMarker)
       }
 
-      results.push(planned)
+      fitPoints.push(...linePath, ...routePath)
+      results.push({
+        type: segment.type,
+        path: linePath,
+        duration: segment.duration ?? planned?.duration,
+        distance: planned?.distance,
+      })
     }
 
-    this.setFitView()
+    // 行程点位标记
+    if (pointContent) {
+      this.getTripPoints(segments).forEach(({ point, type }) => {
+        const marker = new this.AMap.Marker({
+          position: new this.AMap.LngLat(point.lng, point.lat),
+          offset: new this.AMap.Pixel(-12, -12),
+          cursor: 'default',
+          content: pointContent(type),
+          zIndex: 150,
+        })
+        this.map!.add(marker)
+        this.tripOverlays.push(marker)
+      })
+    }
+
+    // 用所有路径点（含规划线）自己算包围盒再适配视野，setFitView 有时会把末段裁到屏幕外
+    this.fitPoints(fitPoints)
     return results
+  }
+
+  /**
+   * 按给定坐标点集合适配地图视野
+   */
+  private fitPoints(points: AMap.LngLat[]): void {
+    if (!this.map || points.length < 2) {
+      return
+    }
+    let minLng = Infinity
+    let minLat = Infinity
+    let maxLng = -Infinity
+    let maxLat = -Infinity
+    points.forEach((point) => {
+      minLng = Math.min(minLng, point.getLng())
+      maxLng = Math.max(maxLng, point.getLng())
+      minLat = Math.min(minLat, point.getLat())
+      maxLat = Math.max(maxLat, point.getLat())
+    })
+    if (!Number.isFinite(minLng) || !Number.isFinite(minLat)) {
+      return
+    }
+    // 留 8% 边距，避免终点标记贴边被裁
+    const padLng = (maxLng - minLng) * 0.08 || 0.005
+    const padLat = (maxLat - minLat) * 0.08 || 0.005
+    // Bounds 必须显式传西南角与东北角，无参构造得到的是无效盒
+    const bounds = new this.AMap.Bounds(
+      [minLng - padLng, minLat - padLat],
+      [maxLng + padLng, maxLat + padLat],
+    )
+    this.map.setBounds(bounds)
   }
 
   /**
    * 清除行程相关的所有覆盖物（不影响其它标记与折线）
    */
   clearTrip(): void {
+    // 序号自增，让在途的绘制在下一个 await 后自行作废
+    this.tripSeq++
     if (!this.tripOverlays.length) {
       return
     }
