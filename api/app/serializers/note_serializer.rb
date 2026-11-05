@@ -23,6 +23,14 @@ class NoteSerializer
       notes.map { |note| render(note, liked: liked_ids.include?(note.id)) }
     end
 
+    # 详情页：在列表字段基础上追加 Markdown 正文与分段行程（含每段图片）
+    def render_detail(note, liked: false)
+      render(note, liked: liked).merge(
+        content: note.content.to_s,
+        sections: note.sections || []
+      )
+    end
+
     def render_admin(note)
       {
         id: note.id,
@@ -34,6 +42,8 @@ class NoteSerializer
         likes_count: note.likes_count,
         channel: note.channel,
         sort: note.sort,
+        content: note.content.to_s,
+        sections: note.sections || [],
         created_at: note.created_at.iso8601,
         updated_at: note.updated_at.iso8601
       }

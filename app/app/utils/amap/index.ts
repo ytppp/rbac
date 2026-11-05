@@ -62,6 +62,8 @@ export default class AMapUtils {
   private tripOverlays: any[] = []
   // 行程绘制序号：用于作废在途的旧绘制，避免并发叠加
   private tripSeq = 0
+  // 每段行程的路径（两点直线 + 规划线），供「跳到某一段」时单独适配视野
+  private tripPaths: { line: AMap.LngLat[]; route: AMap.LngLat[] }[] = []
 
   /**
    * 构造函数
@@ -645,6 +647,7 @@ export default class AMapUtils {
         this.tripOverlays.push(labelMarker)
       }
 
+      this.tripPaths.push({ line: linePath, route: routePath })
       fitPoints.push(...linePath, ...routePath)
       results.push({
         type: segment.type,
@@ -672,6 +675,18 @@ export default class AMapUtils {
     // 用所有路径点（含规划线）自己算包围盒再适配视野，setFitView 有时会把末段裁到屏幕外
     this.fitPoints(fitPoints)
     return results
+  }
+
+  /**
+   * 把视野放大到某一段行程（详情页点击标题时调用）
+   * @param index 行程段的序号，与 drawTrip 传入数组的顺序一致
+   */
+  focusTripSegment(index: number): void {
+    const paths = this.tripPaths[index]
+    if (!paths) {
+      return
+    }
+    this.fitPoints([...paths.line, ...paths.route])
   }
 
   /**
@@ -711,6 +726,7 @@ export default class AMapUtils {
   clearTrip(): void {
     // 序号自增，让在途的绘制在下一个 await 后自行作废
     this.tripSeq++
+    this.tripPaths = []
     if (!this.tripOverlays.length) {
       return
     }

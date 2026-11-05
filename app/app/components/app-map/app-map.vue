@@ -470,12 +470,18 @@ watch(() => props.points, renderPoints, { deep: true })
 // 外部行程变化时重绘
 watch(() => props.trip, renderTrip, { deep: true })
 
+// 把视野放大到某一段行程：详情页点标题时用来「跳转到对应路段」
+const focusTripSegment = (index: number) => {
+  aMapUtils.value?.focusTripSegment(index)
+}
+
 defineExpose({
   // 注意：setup 阶段 aMapUtils.value 还是 null，必须暴露 getter
   getAMapUtils: () => aMapUtils.value,
   addMarker,
   renderPoints,
   renderTrip,
+  focusTripSegment,
 })
 </script>
 

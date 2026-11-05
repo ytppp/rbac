@@ -1,70 +1,87 @@
 <template>
-  <main class="flex flex-col gap-4 lg:flex-row lg:gap-6">
-    <channel-nav :channels="channels" />
-    <div class="min-w-0 flex-1">
-      <el-alert
-        v-if="error"
-        class="mx-auto mt-60px max-w-[560px]"
-        type="error"
-        title="内容加载失败，请确认 api 服务已启动"
-        :closable="false"
-        show-icon
-      />
-      <section v-else-if="notes.length">
-        <!-- 瀑布流异步懒加载且只在客户端渲染：加载完成前先用骨架屏占位，避免首屏空白 -->
-        <div v-if="!waterfallReady" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <el-skeleton v-for="i in 8" :key="i" animated>
-            <template #template>
-              <el-skeleton-item variant="image" class="!h-160px !w-full !rounded-8px" />
-              <div class="mt-3 space-y-2">
-                <el-skeleton-item variant="text" class="!w-90%" />
-                <el-skeleton-item variant="text" class="!w-60%" />
-              </div>
-            </template>
-          </el-skeleton>
+  <div class="flex flex-col gap-5">
+    <!-- 旅行主题横幅：一张海岸公路图 + 深色渐变，保证文字可读 -->
+    <section class="travel-hero">
+      <img class="travel-hero__img" :src="HERO_IMAGE" alt="海岸公路旅行风景" />
+      <div class="travel-hero__shade" />
+      <div class="travel-hero__content">
+        <p class="travel-hero__eyebrow">TRAVEL JOURNAL</p>
+        <h1 class="travel-hero__title">把每一次出发，收藏成故事</h1>
+        <p class="travel-hero__desc">地图路线、沿途照片与旅行手记，都在这里。</p>
+      </div>
+      <div class="travel-hero__tags">
+        <span><icon name="i-carbon:map" /> 路线地图</span>
+        <span><icon name="i-carbon:camera" /> 沿途相册</span>
+      </div>
+    </section>
+
+    <main class="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      <channel-nav :channels="channels" />
+      <div class="min-w-0 flex-1">
+        <el-alert
+          v-if="error"
+          class="mx-auto mt-60px max-w-[560px]"
+          type="error"
+          title="内容加载失败，请确认 api 服务已启动"
+          :closable="false"
+          show-icon
+        />
+        <section v-else-if="notes.length">
+          <!-- 瀑布流异步懒加载且只在客户端渲染：加载完成前先用骨架屏占位，避免首屏空白 -->
+          <div v-if="!waterfallReady" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <el-skeleton v-for="i in 8" :key="i" animated>
+              <template #template>
+                <el-skeleton-item variant="image" class="!h-160px !w-full !rounded-8px" />
+                <div class="mt-3 space-y-2">
+                  <el-skeleton-item variant="text" class="!w-90%" />
+                  <el-skeleton-item variant="text" class="!w-60%" />
+                </div>
+              </template>
+            </el-skeleton>
+          </div>
+          <client-only>
+            <component
+              :is="Waterfall"
+              :list="notes"
+              row-key="id"
+              img-selector="cover"
+              background-color="transparent"
+              :has-around-gutter="false"
+              :gutter="16"
+              :breakpoints="waterfallBreakpoints"
+              :animation-cancel="true"
+              @after-render="handleAfterRender"
+            >
+              <template #default="{ item }">
+                <note-card :note="item as Note" />
+              </template>
+            </component>
+          </client-only>
+        </section>
+
+        <div v-else-if="pending" class="flex-y-center justify-center gap-2 py-120px text-14px text-ink-3">
+          <el-icon class="is-loading" :size="16"><icon name="i-carbon:circle-dash" /></el-icon>
+          <span>加载中…</span>
         </div>
-        <client-only>
-          <component
-            :is="Waterfall"
-            :list="notes"
-            row-key="id"
-            img-selector="cover"
-            background-color="transparent"
-            :has-around-gutter="false"
-            :gutter="16"
-            :breakpoints="waterfallBreakpoints"
-            :animation-cancel="true"
-            @after-render="handleAfterRender"
-          >
-            <template #default="{ item }">
-              <note-card :note="item as Note" />
+
+        <div v-else class="py-80px">
+          <el-empty description="没有找到相关内容，换个关键词试试" />
+        </div>
+
+        <!-- 无限下拉的「哨兵」：它一滚进视口附近，就自动去加载下一页 -->
+        <div ref="sentinel" class="flex min-h-48px items-center justify-center gap-2 pb-6 text-13px text-ink-3">
+          <template v-if="notes.length">
+            <template v-if="pending">
+              <el-icon class="is-loading" :size="14"><icon name="i-carbon:circle-dash" /></el-icon>
+              <span>正在加载更多…</span>
             </template>
-          </component>
-        </client-only>
-      </section>
-
-      <div v-else-if="pending" class="flex-y-center justify-center gap-2 py-120px text-14px text-ink-3">
-        <el-icon class="is-loading" :size="16"><icon name="i-carbon:circle-dash" /></el-icon>
-        <span>加载中…</span>
-      </div>
-
-      <div v-else class="py-80px">
-        <el-empty description="没有找到相关内容，换个关键词试试" />
-      </div>
-
-      <!-- 无限下拉的「哨兵」：它一滚进视口附近，就自动去加载下一页 -->
-      <div ref="sentinel" class="flex min-h-48px items-center justify-center gap-2 pb-6 text-13px text-ink-3">
-        <template v-if="notes.length">
-          <template v-if="pending">
-            <el-icon class="is-loading" :size="14"><icon name="i-carbon:circle-dash" /></el-icon>
-            <span>正在加载更多…</span>
+            <span v-else-if="!hasMore">~我是有底线的~</span>
           </template>
-          <span v-else-if="!hasMore">~我是有底线的~</span>
-        </template>
+        </div>
+        <site-info class="pt-6 lg:hidden" />
       </div>
-      <site-info class="pt-6 lg:hidden" />
-    </div>
-  </main>
+    </main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -72,6 +89,10 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vu
 import type { Note } from '~/composables/useNotes'
 import { useDebouncedRef, useFeed } from '~/composables/useFeed'
 import { useNotesFeed } from '~/composables/useNotes'
+
+/** 首页横幅图：海岸公路，和全站的青 / 沙 / 珊瑚配色一致 */
+const HERO_IMAGE =
+  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=winding%20coastal%20road%20along%20turquoise%20ocean%2C%20golden%20hour%2C%20green%20mountains%2C%20cinematic%20travel%20photography%2C%20warm%20sunlight%2C%20no%20text&image_size=landscape_16_9'
 
 // vue-waterfall-plugin-next 在模块顶层就访问了 document，参与 SSR 会直接报错，
 // 因此改成惰性加载，并只在客户端（下面的 ClientOnly 内）渲染
@@ -151,3 +172,113 @@ onBeforeUnmount(() => {
 })
 
 </script>
+
+<style scoped>
+/* 首页旅行横幅：固定高度，图片铺满，左侧压深色渐变承载文字 */
+.travel-hero {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--el-color-primary-dark-2);
+  box-shadow: 0 18px 40px var(--c-shadow);
+}
+
+.travel-hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.travel-hero__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(7, 38, 42, 0.82) 0%,
+    rgba(7, 38, 42, 0.46) 46%,
+    rgba(7, 38, 42, 0.08) 100%
+  );
+}
+
+.travel-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: 0 32px;
+  color: #fff;
+}
+
+.travel-hero__eyebrow {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+
+.travel-hero__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+}
+
+.travel-hero__desc {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+}
+
+.travel-hero__tags {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.travel-hero__tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .travel-hero {
+    height: 160px;
+    border-radius: 20px;
+  }
+
+  .travel-hero__content {
+    padding: 0 20px;
+  }
+
+  .travel-hero__title {
+    font-size: 20px;
+  }
+
+  .travel-hero__desc {
+    font-size: 12px;
+  }
+
+  .travel-hero__tags {
+    display: none;
+  }
+}
+</style>

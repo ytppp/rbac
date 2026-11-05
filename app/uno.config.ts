@@ -27,8 +27,9 @@ export default defineConfig({
     colors: {
       primary: 'var(--el-color-primary)',
       primary_dark: 'var(--el-color-primary-light-5)',
-      // 之前的
-      brand: '#ff2e4d',
+      // 品牌主色跟随旅行主题的海岸青
+      brand: 'var(--el-color-primary)',
+      accent: 'var(--c-accent)',
       // 语义色统一走 CSS 变量，亮色/暗色取值见 assets/style/main.css
       page: 'var(--c-page)',
       card: 'var(--c-card)',

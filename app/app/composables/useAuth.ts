@@ -23,6 +23,13 @@ interface LoginResult {
   user: AuthUser
 }
 
+interface RegisterPayload {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
 const USER_CACHE_KEY = 'community_auth_user'
 
 export function useAuth() {
@@ -44,6 +51,13 @@ export function useAuth() {
     return token.value ? { Authorization: `Bearer ${token.value}` } : {}
   }
 
+  /** 登录 / 注册成功后统一写入本地登录态 */
+  function applySession(result: LoginResult) {
+    token.value = result.token
+    cookie.value = result.token // 写回 cookie，供刷新后恢复
+    user.value = result.user
+  }
+
   async function login(email: string, password: string) {
     const baseURL = useApiBase()
     const result = await $fetch<LoginResult>('/auth/login', {
@@ -52,9 +66,20 @@ export function useAuth() {
       body: { email, password }
     })
 
-    token.value = result.token
-    cookie.value = result.token // 写回 cookie，供刷新后恢复
-    user.value = result.user
+    applySession(result)
+    return result
+  }
+
+  /** 注册成功即登录：后端会同时返回 token 与用户信息 */
+  async function register(payload: RegisterPayload) {
+    const baseURL = useApiBase()
+    const result = await $fetch<LoginResult>('/auth/register', {
+      baseURL,
+      method: 'POST',
+      body: payload
+    })
+
+    applySession(result)
     return result
   }
 
@@ -83,5 +108,5 @@ export function useAuth() {
     user.value = null
   }
 
-  return { token, user, isLoggedIn, authHeaders, login, fetchMe, logout }
+  return { token, user, isLoggedIn, authHeaders, login, register, fetchMe, logout }
 }

@@ -105,6 +105,27 @@ export interface LoginResult {
   permissions: string[]
 }
 
+export type NoteSectionType = 'plane' | 'driving' | 'walking' | 'none'
+
+export interface NoteSectionPoint {
+  lng?: number
+  lat?: number
+  name?: string
+}
+
+/** 详情页的一段内容：标题 + Markdown 正文 + 可选行程 + 图片，整段自成一个块 */
+export interface NoteSection {
+  title?: string
+  content?: string
+  type?: NoteSectionType
+  origin?: NoteSectionPoint
+  destination?: NoteSectionPoint
+  /** 预计耗时（秒） */
+  duration?: number
+  completed?: boolean
+  images?: string[]
+}
+
 /** 管理后台看到的内容（字段用数据库列名，便于编辑弹窗原样回填） */
 export interface AdminNote {
   id: number
@@ -116,6 +137,8 @@ export interface AdminNote {
   likes_count: number
   channel: string
   sort: number
+  content: string
+  sections: NoteSection[]
   created_at: string
   updated_at: string
 }
@@ -128,6 +151,8 @@ export interface NotePayload {
   avatar_color: string
   channel: string
   sort: number
+  content: string
+  sections: NoteSection[]
 }
 
 /** 内容列表接口的返回：比通用 PageResult 多一个频道列表 */

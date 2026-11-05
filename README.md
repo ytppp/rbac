@@ -2,26 +2,26 @@
 
 一个仓库包含三个并列模块：
 
-| 模块       | 说明               | 技术栈                                    |
-| ---------- | ------------------ | ----------------------------------------- |
-| `api/`   | 后端接口服务       | Ruby on Rails 7.1（API 模式）+ PostgreSQL |
-| `admin/` | 管理后台           | Vue 3 + Element Plus + Vite               |
-| `app/`   | 面向用户的内容社区 | Nuxt 3                                    |
+| 模块       | 说明        | 技术栈                                   |
+| -------- | --------- | ------------------------------------- |
+| `api/`   | 后端接口服务    | Ruby on Rails 7.1（API 模式）+ PostgreSQL |
+| `admin/` | 管理后台      | Vue 3 + Element Plus + Vite           |
+| `app/`   | 面向用户的内容社区 | Nuxt 4                                |
 
 权限模型是标准的 **用户 → 角色 → 权限** 三级 RBAC，权限同时覆盖 **菜单级**（前端动态路由与侧边栏）和 **按钮级 / 接口级**（后端接口校验）。
 
----
+***
 
 ## 一、技术栈
 
-| 模块  | 技术                                                                                          |
-| ----- | --------------------------------------------------------------------------------------------- |
+| 模块    | 技术                                                                                  |
+| ----- | ----------------------------------------------------------------------------------- |
 | api   | Ruby 3.3 / Rails 7.1（`--api`）/ PostgreSQL 14+ / JWT（`jwt` gem）/ `bcrypt` / Kaminari |
-| admin | Vue 3.5 / Vite 5 / TypeScript / Pinia / Vue Router 4 / Element Plus 2.8 / Axios               |
-| app   | Nuxt 3 / Vue 3 / TypeScript                                                                   |
-| 运行  | Docker Compose（`postgres:16-alpine` + `ruby:3.3.5-slim` + `node:20-alpine`）           |
+| admin | Vue 3.5 / Vite 5 / TypeScript / Pinia / Vue Router 4 / Element Plus 2.8 / Axios     |
+| app   | Nuxt 4 / Vue 3 / TypeScript                                                         |
+| 运行    | Docker Compose（`postgres:16-alpine` + `ruby:3.3.5-slim` + `node:20-alpine`）         |
 
----
+***
 
 ## 二、目录结构
 
@@ -52,7 +52,7 @@
 │   ├── vite.config.ts           # 开发代理 /api -> localhost:3000
 │   └── Dockerfile               # node:20-alpine 镜像
 │
-├── app/                         # 内容社区（Nuxt 3）
+├── app/                         # 内容社区（Nuxt 4）
 │   ├── app.vue                  # 根组件：顶栏 + 页面出口
 │   ├── pages/index.vue          # 首页：频道栏 + 瀑布流
 │   ├── components/
@@ -72,18 +72,18 @@
 └── README.md
 ```
 
----
+***
 
 ## 三、数据模型
 
-| 表                   | 说明                                                                                                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users`            | 账号：email（唯一）、name、password_digest、status（0 禁用 / 1 启用）、last_login_at                                                                              |
-| `roles`            | 角色：name、code（唯一，如`user_manager`）、status、`built_in`（内置角色不可删）                                                                              |
-| `permissions`      | 权限节点：name、code（唯一，如`system:user:create`）、`type`（0 菜单 / 1 按钮）、parent_id（自关联树）、path / component / icon（菜单路由信息）、sort、status |
-| `user_roles`       | 用户-角色关联（联合唯一）                                                                                                                                         |
-| `role_permissions` | 角色-权限关联（联合唯一）                                                                                                                                         |
-| `notes`            | 社区内容：title、cover_url、cover_ratio（封面宽高比，图片加载前占位用）、author_name、avatar_color、likes_count、channel、sort                                    |
+| 表                  | 说明                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `users`            | 账号：email（唯一）、name、password\_digest、status（0 禁用 / 1 启用）、last\_login\_at                                                    |
+| `roles`            | 角色：name、code（唯一，如`user_manager`）、status、`built_in`（内置角色不可删）                                                               |
+| `permissions`      | 权限节点：name、code（唯一，如`system:user:create`）、`type`（0 菜单 / 1 按钮）、parent\_id（自关联树）、path / component / icon（菜单路由信息）、sort、status |
+| `user_roles`       | 用户-角色关联（联合唯一）                                                                                                             |
+| `role_permissions` | 角色-权限关联（联合唯一）                                                                                                             |
+| `notes`            | 社区内容：title、cover\_url、cover\_ratio（封面宽高比，图片加载前占位用）、author\_name、avatar\_color、likes\_count、channel、sort                   |
 
 ### 权限码约定
 
@@ -106,7 +106,7 @@ system:user:create / system:user:update / system:user:delete
 
 超管账号本身同样受保护：非超管即使持有 `system:user:update` / `system:user:delete`，也只能在列表中看到超管账号，不能编辑、禁用、重置密码或删除它（后端 `ensure_target_manageable!` 拦截，前端对应按钮置灰并提示「超级管理员账号仅超级管理员可操作」）。此外非超管不能把 `super_admin` 角色分配给任何人——`role_ids` 会被校验拒绝，`/roles/options` 也不会返回该角色，避免越权提权。
 
----
+***
 
 ## 四、Docker 一键运行（推荐）
 
@@ -131,12 +131,12 @@ docker compose logs -f
 
 ### 2. 访问地址
 
-| 地址                  | 模块  | 说明                            |
-| --------------------- | ----- | ------------------------------- |
-| http://localhost:5173 | admin | 管理后台（Vite Dev Server）     |
-| http://localhost:3001 | app   | 内容社区首页（Nuxt Dev Server） |
-| http://localhost:3000 | api   | 后端 API                        |
-| localhost:5432        | db    | PostgreSQL                      |
+| 地址                      | 模块    | 说明                      |
+| ----------------------- | ----- | ----------------------- |
+| <http://localhost:5173> | admin | 管理后台（Vite Dev Server）   |
+| <http://localhost:3001> | app   | 内容社区首页（Nuxt Dev Server） |
+| <http://localhost:3000> | api   | 后端 API                  |
+| localhost:5432          | db    | PostgreSQL              |
 
 ### 3. 常用命令
 
@@ -177,7 +177,7 @@ JWT_SECRET=dev-only-secret-please-change-in-production-32chars
 - `api/Gemfile` 将 `json` 锁定在 `~> 2.7`：`json 3.x` 移除了 `quirks_mode` 关键字，与 Rails 7.1 的 JSON 编码不兼容，会导致所有 JSON 响应 500。
 - 若拉取官方镜像缓慢，可在 Docker Desktop 的 `settings.json` 中配置 `registry-mirrors`，或先 `docker pull` 加速镜像后再 `docker tag` 为 `ruby:3.3.5-slim` / `node:20-alpine` / `postgres:16-alpine` 通用标签。
 
----
+***
 
 ## 五、本地启动步骤（不使用 Docker）
 
@@ -252,14 +252,14 @@ npm run dev
 
 ### 4. 默认账号
 
-| 账号                    | 密码               | 角色       | 权限范围                       |
-| ----------------------- | ------------------ | ---------- | ------------------------------ |
-| `admin@example.com`   | `Admin@123456`   | 超级管理员 | 全部权限，跳过校验             |
+| 账号                    | 密码               | 角色    | 权限范围               |
+| --------------------- | ---------------- | ----- | ------------------ |
+| `admin@example.com`   | `Admin@123456`   | 超级管理员 | 全部权限，跳过校验          |
 | `manager@example.com` | `Manager@123456` | 用户管理员 | 仅用户管理的查询 / 新增 / 编辑 |
 
 > 用 `manager` 登录可以直观看到菜单裁剪、按钮隐藏和接口 403 的效果。
 
----
+***
 
 ## 六、接口一览
 
@@ -267,9 +267,9 @@ npm run dev
 
 ### 内容（app 模块，公开）
 
-| 方法 | 路径       | 说明                                                                                | 所需权限 |
-| ---- | ---------- | ----------------------------------------------------------------------------------- | -------- |
-| GET  | `/notes` | 内容列表，按`sort` 升序；支持 `channel` / `keyword` / `page` / `per_page` | 公开     |
+| 方法  | 路径       | 说明                                                             | 所需权限 |
+| --- | -------- | -------------------------------------------------------------- | ---- |
+| GET | `/notes` | 内容列表，按`sort` 升序；支持 `channel` / `keyword` / `page` / `per_page` | 公开   |
 
 响应同时带上频道列表，前端一次请求就能渲染频道栏：
 
@@ -298,53 +298,53 @@ npm run dev
 
 ### 认证
 
-| 方法   | 路径             | 说明                             | 所需权限 |
-| ------ | ---------------- | -------------------------------- | -------- |
-| POST   | `/auth/login`  | 登录，返回 token + 用户 + 权限码 | 公开     |
-| DELETE | `/auth/logout` | 登出（前端清除 token）           | 登录即可 |
-| GET    | `/auth/me`     | 当前用户信息 + 权限码            | 登录即可 |
+| 方法     | 路径             | 说明                     | 所需权限 |
+| ------ | -------------- | ---------------------- | ---- |
+| POST   | `/auth/login`  | 登录，返回 token + 用户 + 权限码 | 公开   |
+| DELETE | `/auth/logout` | 登出（前端清除 token）         | 登录即可 |
+| GET    | `/auth/me`     | 当前用户信息 + 权限码           | 登录即可 |
 | GET    | `/menus`       | 当前用户可见的菜单树             | 登录即可 |
 
 ### 用户
 
-| 方法   | 路径                    | 说明                                                 | 所需权限               |
-| ------ | ----------------------- | ---------------------------------------------------- | ---------------------- |
+| 方法     | 路径                    | 说明                                      | 所需权限                 |
+| ------ | --------------------- | --------------------------------------- | -------------------- |
 | GET    | `/users`              | 分页列表，支持`keyword` / `status` / `role_id` | `system:user:list`   |
-| GET    | `/users/:id`          | 详情                                                 | `system:user:list`   |
-| POST   | `/users`              | 新增                                                 | `system:user:create` |
-| PATCH  | `/users/:id`          | 编辑（含角色分配`role_ids`）                       | `system:user:update` |
-| PATCH  | `/users/:id/status`   | 启用 / 禁用                                          | `system:user:update` |
-| PATCH  | `/users/:id/password` | 管理员重置密码                                       | `system:user:update` |
-| DELETE | `/users/:id`          | 删除                                                 | `system:user:delete` |
+| GET    | `/users/:id`          | 详情                                      | `system:user:list`   |
+| POST   | `/users`              | 新增                                      | `system:user:create` |
+| PATCH  | `/users/:id`          | 编辑（含角色分配`role_ids`）                     | `system:user:update` |
+| PATCH  | `/users/:id/status`   | 启用 / 禁用                                 | `system:user:update` |
+| PATCH  | `/users/:id/password` | 管理员重置密码                                 | `system:user:update` |
+| DELETE | `/users/:id`          | 删除                                      | `system:user:delete` |
 
 ### 角色
 
-| 方法   | 路径               | 说明                             | 所需权限                                     |
-| ------ | ------------------ | -------------------------------- | -------------------------------------------- |
-| GET    | `/roles`         | 分页列表                         | `system:role:list`                         |
-| GET    | `/roles/options` | 下拉选项（非超管不返回超管角色） | `system:role:list` 或 `system:user:list` |
-| GET    | `/roles/:id`     | 详情（含`permission_ids`）     | `system:role:list`                         |
-| POST   | `/roles`         | 新增（含`permission_ids`）     | `system:role:create`                       |
-| PATCH  | `/roles/:id`     | 编辑（含`permission_ids`）     | `system:role:update`                       |
-| DELETE | `/roles/:id`     | 删除                             | `system:role:delete`                       |
+| 方法     | 路径               | 说明                    | 所需权限                                    |
+| ------ | ---------------- | --------------------- | --------------------------------------- |
+| GET    | `/roles`         | 分页列表                  | `system:role:list`                      |
+| GET    | `/roles/options` | 下拉选项（非超管不返回超管角色）      | `system:role:list` 或 `system:user:list` |
+| GET    | `/roles/:id`     | 详情（含`permission_ids`） | `system:role:list`                      |
+| POST   | `/roles`         | 新增（含`permission_ids`） | `system:role:create`                    |
+| PATCH  | `/roles/:id`     | 编辑（含`permission_ids`） | `system:role:update`                    |
+| DELETE | `/roles/:id`     | 删除                    | `system:role:delete`                    |
 
 ### 权限
 
-| 方法   | 路径                     | 说明                                                    | 所需权限                                           |
-| ------ | ------------------------ | ------------------------------------------------------- | -------------------------------------------------- |
-| GET    | `/permissions`         | 树形列表；`flat=true` 或带 `keyword` 时返回平铺列表 | `system:permission:list`                         |
-| GET    | `/permissions/options` | 上级菜单下拉数据                                        | `system:permission:list` 或 `system:role:list` |
-| POST   | `/permissions`         | 新增                                                    | `system:permission:create`                       |
-| PATCH  | `/permissions/:id`     | 编辑                                                    | `system:permission:update`                       |
-| DELETE | `/permissions/:id`     | 删除（有子节点或已被角色引用时拒绝）                    | `system:permission:delete`                       |
+| 方法     | 路径                     | 说明                                    | 所需权限                                          |
+| ------ | ---------------------- | ------------------------------------- | --------------------------------------------- |
+| GET    | `/permissions`         | 树形列表；`flat=true` 或带 `keyword` 时返回平铺列表 | `system:permission:list`                      |
+| GET    | `/permissions/options` | 上级菜单下拉数据                              | `system:permission:list` 或 `system:role:list` |
+| POST   | `/permissions`         | 新增                                    | `system:permission:create`                    |
+| PATCH  | `/permissions/:id`     | 编辑                                    | `system:permission:update`                    |
+| DELETE | `/permissions/:id`     | 删除（有子节点或已被角色引用时拒绝）                    | `system:permission:delete`                    |
 
 ### 个人中心
 
-| 方法  | 路径                  | 说明                         |
-| ----- | --------------------- | ---------------------------- |
+| 方法    | 路径                  | 说明                |
+| ----- | ------------------- | ----------------- |
 | GET   | `/profile`          | 当前用户资料 + 角色 + 权限码 |
-| PATCH | `/profile`          | 修改昵称 / 邮箱              |
-| PATCH | `/profile/password` | 修改密码（需校验当前密码）   |
+| PATCH | `/profile`          | 修改昵称 / 邮箱         |
+| PATCH | `/profile/password` | 修改密码（需校验当前密码）     |
 
 ### 响应约定
 
@@ -354,7 +354,7 @@ npm run dev
 - `403` 已登录但缺少权限，错误信息中会列出所需权限码
 - `422` 参数校验失败
 
----
+***
 
 ## 七、管理后台的权限机制
 
@@ -362,16 +362,14 @@ npm run dev
 2. **动态路由**：路由守卫 `router/guard.ts` 在首次进入时调用 `/menus` 拿到菜单树，由 `router/dynamic.ts` 转换为路由记录后 `router.addRoute` 注册，兜底 404 路由在动态路由之后注册。
 3. **侧边栏**：`layout/components/SidebarItem.vue` 递归渲染菜单树，`icon` 字段直接对应全局注册的 Element Plus 图标名。
 4. **按钮级权限**：
-
    ```vue
    <el-button v-perm="'system:user:create'">新增</el-button>
    <el-button v-perm="['system:user:update', 'system:user:delete']">批量操作</el-button>
    ```
-
    不满足权限时元素会从 DOM 中移除。
 5. **接口级权限**：后端 `Api::V1::BaseController#authorize!(*codes)` 按权限码校验，前端的按钮隐藏只是体验优化，真正的安全边界在后端。
 
----
+***
 
 ## 八、内容社区 app
 
@@ -394,9 +392,9 @@ docker compose exec api ruby bin/rails db:seed
 
 请求分两条路径，由 `app/composables/useApi.ts` 按环境选择：
 
-| 场景                | 地址                             | 说明                                             |
-| ------------------- | -------------------------------- | ------------------------------------------------ |
-| SSR 首次直出        | `http://api:3000/api/v1`       | 容器内网直连 api 服务，不经过浏览器              |
+| 场景          | 地址                             | 说明                                  |
+| ----------- | ------------------------------ | ----------------------------------- |
+| SSR 首次直出    | `http://api:3000/api/v1`       | 容器内网直连 api 服务，不经过浏览器                |
 | 浏览器切频道 / 搜索 | `http://localhost:3000/api/v1` | 直连 api，跨域由后端的`CORS_ORIGINS` 放行 3001 |
 
 两个地址来自 `nuxt.config.ts` 的 `runtimeConfig.apiServerBase` / `runtimeConfig.public.apiBase`，可分别用 `NUXT_API_SERVER_BASE` / `NUXT_PUBLIC_API_BASE` 覆盖（`docker-compose.yml` 里已设好）。
@@ -411,30 +409,26 @@ docker compose exec api ruby bin/rails db:seed
 
 > 点赞目前只有前端状态（数量 +1、红心点亮），还没有对应的写接口，刷新后会还原。
 
----
+***
 
 ## 九、扩展一个新模块
 
 以「订单管理」为例（管理后台侧）：
 
 1. 在「权限管理」页面新增权限节点：
-
-   | 名称     | 编码                  | 类型 | 路由地址        | 组件路径             | 上级     |
-   | -------- | --------------------- | ---- | --------------- | -------------------- | -------- |
-   | 订单管理 | `order`             | 菜单 | `/order`      | （留空，目录节点）   | 无       |
+   | 名称   | 编码                  | 类型 | 路由地址          | 组件路径               | 上级   |
+   | ---- | ------------------- | -- | ------------- | ------------------ | ---- |
+   | 订单管理 | `order`             | 菜单 | `/order`      | （留空，目录节点）          | 无    |
    | 订单列表 | `order:list`        | 菜单 | `/order/list` | `order/list/index` | 订单管理 |
-   | 查询订单 | `order:list:view`   | 按钮 | -               | -                    | 订单列表 |
-   | 取消订单 | `order:list:cancel` | 按钮 | -               | -                    | 订单列表 |
-
-
+   | 查询订单 | `order:list:view`   | 按钮 | -             | -                  | 订单列表 |
+   | 取消订单 | `order:list:cancel` | 按钮 | -             | -                  | 订单列表 |
    > 组件路径是相对 `admin/src/views/` 的路径（不含 `.vue`）。
-   >
 2. 在 `admin/src/views/order/list/index.vue` 创建页面组件（无需改动路由文件）。
 3. 在「角色管理」中把新权限勾选给对应角色，重新登录即可看到菜单。
 
 后端新增业务接口时，在控制器中调用 `authorize!("order:list:cancel")` 即可完成接口级鉴权。
 
----
+***
 
 ## 十、测试
 

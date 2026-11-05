@@ -4,7 +4,7 @@
 # ---------- 权限树 ----------
 PERMISSION_TREE = [
   {
-    name: "仪表盘",
+    name: "首页",
     code: "dashboard",
     type: :menu,
     path: "/dashboard",
@@ -160,6 +160,23 @@ viewer.assign_attributes(
 viewer.save!
 viewer.permission_ids = Permission.where(
   code: %w[dashboard system system:user system:user:list system:role system:role:list]
+).pluck(:id)
+
+# 内容社区注册用户：后台只看首页 + 内容管理，但可以维护内容
+registered_user = Role.find_or_initialize_by(code: Role::REGISTERED_USER_CODE)
+registered_user.assign_attributes(
+  name: "注册用户",
+  description: "从内容社区注册的用户，仅可进入后台首页与内容管理",
+  status: :enabled,
+  built_in: true
+)
+registered_user.save!
+registered_user.permission_ids = Permission.where(
+  code: %w[
+    dashboard
+    content content:note
+    content:note:list content:note:create content:note:update content:note:delete
+  ]
 ).pluck(:id)
 
 # ---------- 账号 ----------

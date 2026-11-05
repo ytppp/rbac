@@ -2,13 +2,13 @@ module Api
   module V1
     # 面向 app 模块的内容接口。
     class NotesController < BaseController
-      # 列表公开访问，跳过登录校验；like / unlike 仍需登录
-      skip_before_action :authenticate_user!, only: %i[index]
+      # 列表与详情公开访问，跳过登录校验；like / unlike 仍需登录
+      skip_before_action :authenticate_user!, only: %i[index show]
 
-      # 列表带 token 时顺便识别用户，用于标记已赞内容
-      before_action :optional_authenticate_user!, only: %i[index]
+      # 带 token 时顺便识别用户，用于标记已赞内容
+      before_action :optional_authenticate_user!, only: %i[index show]
 
-      before_action :set_note, only: %i[like unlike]
+      before_action :set_note, only: %i[show like unlike]
 
       def index
         # includes(:user) 预加载作者，避免序列化 author_avatar 时逐条查库
@@ -26,6 +26,13 @@ module Api
           channels: Note.channel_list,
           meta: pagination_meta(paginated)
         }
+      end
+
+      # GET /api/v1/notes/:id
+      # 详情页：正文 Markdown + 分段行程（每段含图片）
+      def show
+        liked = current_user ? NoteLike.exists?(user_id: current_user.id, note_id: @note.id) : false
+        render json: NoteSerializer.render_detail(@note, liked: liked)
       end
 
       # POST /api/v1/notes/:id/like

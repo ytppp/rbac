@@ -12,6 +12,8 @@ export default defineNuxtConfig({
     public: {
       // 浏览器直连 api，跨域由后端的 CORS_ORIGINS 放行
       apiBase: 'http://localhost:3000/api/v1',
+      // 管理后台地址：app 顶栏的「管理后台」入口用它拼 SSO 地址
+      adminBase: process.env.ADMIN_BASE || 'http://localhost:5173',
       AMapKey: process.env.AMAP_KEY,
       AMapSecurityJsCode: process.env.AMAP_SECURITY_JS_CODE,
     }
@@ -31,12 +33,12 @@ export default defineNuxtConfig({
   // },
   app: {
     head: {
-      title: '发现 - 记录你的生活灵感',
+      title: '发现 · 旅行手记',
       htmlAttrs: { lang: 'zh-CN' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '一个内容发现社区，用瀑布流浏览穿搭、美食、旅行与生活灵感。' }
+        { name: 'description', content: '一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。' }
       ]
     }
   },
@@ -51,7 +53,7 @@ export default defineNuxtConfig({
     }
   },
   i18n: {
-    defaultLocale: 'en',
+    defaultLocale: 'zh',
     langDir: '../i18n/locales/',
     locales: [
       { code: 'en', name: 'English', file: 'en-US.json' },

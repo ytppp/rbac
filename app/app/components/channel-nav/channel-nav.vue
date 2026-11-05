@@ -1,7 +1,7 @@
 <template>
   <!-- 窄屏：吸顶在顶栏下方的横向频道栏（统一 el-menu，mode=horizontal 横向滚动） -->
   <nav
-    class="channel-bar sticky z-15 border-b border-line bg-[rgba(245,245,245,0.94)] [backdrop-filter:saturate(180%)_blur(12px)] lg:hidden dark:bg-[rgba(10,10,10,0.94)]"
+    class="channel-bar sticky z-15 lg:hidden"
     :class="headerShown ? 'top-66px' : 'top-0'"
   >
     <el-menu
@@ -19,8 +19,11 @@
     class="channel-side hidden lg:sticky lg:block lg:w-44 lg:flex-none lg:self-start lg:pt-4"
     :class="headerShown ? 'lg:top-66px' : 'lg:top-0'"
   >
-    <div class="mb-2 px-3 text-12px font-500 uppercase tracking-[0.5px] text-ink-3">频道</div>
-    <card :border="true" shadow="hover" body-class="!p-2">
+    <div class="mb-2 px-3">
+      <p class="travel-eyebrow m-0">DESTINATIONS</p>
+      <p class="m-0 mt-1 text-13px font-600 text-ink-1">旅行频道</p>
+    </div>
+    <card :border="true" shadow="never" class="channel-card" body-class="!p-2">
       <el-menu :default-active="channel" class="channel-menu" @select="handleSelect">
         <el-menu-item v-for="item in channels" :key="item" :index="item">{{ item }}</el-menu-item>
       </el-menu>
@@ -50,17 +53,25 @@ function handleSelect(name: string) {
 </script>
 
 <style scoped>
-/* 窄屏横向频道栏：去掉 el-menu 默认的底部边框线，转成 flex 横向滚动并隐藏滚动条 */
+/* 窄屏横向频道栏：暖白毛玻璃 + 胶囊选中态 */
+.channel-bar {
+  background: var(--c-header-bg);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--c-line);
+}
+
 .channel-bar-menu {
   border-bottom: none;
   --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: var(--c-surface);
+  --el-menu-hover-bg-color: transparent;
   --el-menu-active-color: var(--el-color-primary);
 }
 .channel-bar-menu :deep(.el-menu--horizontal) {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
+  height: 54px;
   width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -70,33 +81,63 @@ function handleSelect(name: string) {
   display: none;
 }
 .channel-bar-menu :deep(.el-menu-item) {
-  @apply flex-y-center text-14px;
-  height: 56px;
-  line-height: 56px;
-  margin: 0 18px;
+  @apply flex-y-center text-13px;
+  height: 34px;
+  line-height: 34px;
+  margin: 0 4px;
+  padding: 0 14px;
+  border-bottom: none;
+  border-radius: 999px;
+  color: var(--c-ink-2);
 }
-.channel-bar-menu :deep(.el-menu-item:first-child) {
-  margin-left: 0;
+.channel-bar-menu :deep(.el-menu-item:hover) {
+  background: var(--c-surface);
+  color: var(--c-ink-1);
+}
+.channel-bar-menu :deep(.el-menu-item.is-active) {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-weight: 600;
 }
 
-/* 左侧竖向频道导航：去掉 el-menu 默认的右边框与背景，选中项用一个浅底高亮 */
+/* 左侧频道卡片：暖白底 + 柔和阴影 */
+.channel-card {
+  border-radius: 18px;
+  background: var(--c-card);
+  box-shadow: 0 2px 10px var(--c-shadow);
+}
+
+/* 竖向频道导航：去掉 el-menu 默认边框与背景，选中项用浅色胶囊 + 左侧短竖线 */
 .channel-menu {
   border-right: none;
   --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: var(--c-surface);
+  --el-menu-hover-bg-color: transparent;
   --el-menu-item-height: auto;
   --el-menu-active-color: var(--el-color-primary);
 }
 .channel-menu :deep(.el-menu-item) {
-  @apply flex-y-center rounded-8px px-3 py-2 text-14px;
+  @apply flex-y-center rounded-10px px-3 py-2 text-14px;
   height: auto;
   line-height: 1.5;
   margin-bottom: 2px;
+  color: var(--c-ink-2);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+.channel-menu :deep(.el-menu-item:hover) {
+  background-color: var(--c-surface);
+  color: var(--c-ink-1);
+}
 .channel-menu :deep(.el-menu-item.is-active) {
-  background-color: var(--el-color-primary-light-9);
-  font-weight: 500;
+  background: linear-gradient(90deg, var(--el-color-primary-light-9), transparent);
+  font-weight: 600;
   color: var(--el-color-primary);
+}
+.channel-menu :deep(.el-menu-item.is-active::before) {
+  content: '';
+  width: 3px;
+  height: 14px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: var(--el-color-primary);
 }
 </style>

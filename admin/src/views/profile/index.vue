@@ -16,7 +16,7 @@
             <el-button :loading="submitting">上传头像</el-button>
           </el-upload>
           <el-button v-if="avatarUrl" :disabled="submitting" @click="handleRemoveAvatar">删除头像</el-button>
-          <p class="avatar-hint">支持 PNG / JPEG / WebP，不超过 2MB；不设置则显示昵称首字</p>
+          <p class="avatar-hint">支持 PNG / JPEG / WebP，大图会自动压缩到 512px 后上传</p>
         </div>
       </div>
     </el-card>
@@ -93,6 +93,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { removeAvatar, updatePassword, updateProfile, uploadAvatar } from '@/api/auth'
+import { compressImage } from '@/utils/image'
 import { usePermissionStore } from '@/stores/permission'
 import { useUserStore } from '@/stores/user'
 
@@ -107,9 +108,20 @@ const avatarUrl = computed(() => userStore.userInfo?.avatar_url || undefined)
 const avatarText = computed(() => (userStore.userInfo?.name || 'U').slice(0, 1))
 
 async function handleUploadAvatar(file: File) {
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning('头像原图不能超过 10MB')
+    return false
+  }
+
   submitting.value = true
   try {
-    userStore.userInfo = await uploadAvatar(file)
+    // 头像不需要原图，统一缩到 512px 以内再上传
+    const compressed = await compressImage(file, {
+      maxEdge: 512,
+      quality: 0.9,
+      minSize: 300 * 1024,
+    })
+    userStore.userInfo = await uploadAvatar(compressed)
     ElMessage.success('头像已更新')
   } catch {
     // 错误提示已统一处理

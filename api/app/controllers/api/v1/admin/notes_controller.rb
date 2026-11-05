@@ -51,8 +51,17 @@ module Api
 
         # 白名单不含 likes_count（后台不能手改点赞数），
         # 也不含 author_name：作者由当前登录用户决定，不通过参数传入
+        # sections 为分段行程数组，每段可带交通方式、起终点、耗时、完成状态与图片
         def note_params
-          params.permit(:title, :cover_url, :cover_ratio, :avatar_color, :channel, :sort)
+          params.permit(
+            :title, :cover_url, :cover_ratio, :avatar_color, :channel, :sort, :content,
+            sections: [
+              :type, :duration, :completed, :title, :content,
+              { images: [] },
+              { origin: %i[lng lat name] },
+              { destination: %i[lng lat name] }
+            ]
+          )
         end
       end
     end

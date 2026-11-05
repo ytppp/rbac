@@ -17,6 +17,32 @@ export interface Note {
   liked: boolean
 }
 
+/** 行程段上的点位（与高德坐标一致：经度 lng、纬度 lat） */
+export interface NoteSectionPoint {
+  lng: number
+  lat: number
+  name?: string
+}
+
+/** 详情页的一段内容：标题 + Markdown 正文 + 可选行程 + 图片，整段自成一个块 */
+export interface NoteSection {
+  title?: string
+  content?: string
+  type?: 'plane' | 'driving' | 'walking' | 'none'
+  origin?: NoteSectionPoint
+  destination?: NoteSectionPoint
+  /** 预计耗时（秒） */
+  duration?: number
+  completed?: boolean
+  images?: string[]
+}
+
+/** 内容详情：列表字段 + Markdown 正文 + 分段行程 */
+export interface NoteDetail extends Note {
+  content: string
+  sections: NoteSection[]
+}
+
 export interface PageMeta {
   page: number
   per_page: number

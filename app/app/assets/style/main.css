@@ -1,51 +1,63 @@
 @import 'element-plus/theme-chalk/dark/css-vars.css';
 
-/* 品牌红覆盖 Element Plus 主色。
+/* 旅行主题主色：海岸青。
    写成 :root:root 提高选择器权重，压过 EP 自身按组件加载的 :root 变量 */
 :root:root {
-  --el-color-primary: #ff2e4d;
-  --el-color-primary-light-3: #ff6d82;
-  --el-color-primary-light-5: #ff97a6;
-  --el-color-primary-light-7: #ffc0ca;
-  --el-color-primary-light-8: #ffd5db;
-  --el-color-primary-light-9: #ffe9ed;
-  --el-color-primary-dark-2: #cc253d;
+  --el-color-primary: #0e7c86;
+  --el-color-primary-light-3: #4c9ba2;
+  --el-color-primary-light-5: #87bec3;
+  --el-color-primary-light-7: #b7d8db;
+  --el-color-primary-light-8: #cfe5e7;
+  --el-color-primary-light-9: #e8f4f4;
+  --el-color-primary-dark-2: #0b636b;
 }
 
 /* 暗黑模式下 EP 的色阶要按深色底重新混合，
-   否则 light-9 这类近白的浅粉会在深色背景上形成刺眼的浅色块 */
+   否则 light-9 这类接近白色的色块会在深色背景上显得突兀 */
 html.dark:root {
-  --el-color-primary: #ff2e4d;
-  --el-color-primary-light-3: #b9263c;
-  --el-color-primary-light-5: #8a2131;
-  --el-color-primary-light-7: #5a1c25;
-  --el-color-primary-light-8: #43191f;
-  --el-color-primary-light-9: #2c171a;
-  --el-color-primary-dark-2: #ff5871;
+  --el-color-primary: #45c2bb;
+  --el-color-primary-light-3: #369a95;
+  --el-color-primary-light-5: #2b7a76;
+  --el-color-primary-light-7: #1f5654;
+  --el-color-primary-light-8: #1a4543;
+  --el-color-primary-light-9: #14312f;
+  --el-color-primary-dark-2: #6ed4ce;
 }
 
-/* 项目语义色：亮色沿用原设计取值，暗色对齐 Element Plus 深色配色 */
+/* 项目语义色：暖沙底 + 海岸青 + 日落珊瑚，整体偏旅行手账 */
 :root {
-  --c-page: #f0f0f0;
-  --c-card: #ffffff;
-  --c-line: #ededed;
-  --c-ink-1: #1f1f1f;
-  --c-ink-2: #6b6b6b;
-  --c-ink-3: #9b9b9b;
-  --c-surface: #f2f2f2;
-  --c-surface-focus: #ebebeb;
+  --c-page: #f6f3ec;
+  --c-card: #fffdfa;
+  --c-line: #e7e0d3;
+  --c-ink-1: #20343a;
+  --c-ink-2: #5b6f74;
+  --c-ink-3: #8e9da0;
+  --c-surface: #f1ece2;
+  --c-surface-focus: #e9e2d5;
+  /* 日落珊瑚：用于强调、徽标和少量点缀，不抢主色 */
+  --c-accent: #f2795a;
+  --c-accent-soft: #fdece5;
+  --c-shadow: rgba(28, 68, 72, 0.1);
+  --c-header-bg: rgba(255, 253, 250, 0.86);
+  --c-glass: rgba(255, 255, 255, 0.78);
+  --c-brand-gradient: linear-gradient(135deg, #0e7c86 0%, #3fa7a5 55%, #7ec8d4 100%);
 }
 
 html.dark {
-  --c-page: #0a0a0a;
-  --c-card: #1d1e1f;
-  --c-line: #363637;
-  --c-ink-1: #e5eaf3;
-  --c-ink-2: #cfd3dc;
-  --c-ink-3: #a3a6ad;
-  --c-surface: #262727;
-  --c-surface-focus: #303030;
-  /* 页面底色只在暗黑模式接管，亮色下保持原有白底观感 */
+  --c-page: #0b1416;
+  --c-card: #142023;
+  --c-line: #2a3a3d;
+  --c-ink-1: #e9f2f1;
+  --c-ink-2: #b6c6c6;
+  --c-ink-3: #849799;
+  --c-surface: #1b292c;
+  --c-surface-focus: #223336;
+  --c-accent: #ff9a7c;
+  --c-accent-soft: #33221e;
+  --c-shadow: rgba(0, 0, 0, 0.45);
+  --c-header-bg: rgba(20, 32, 35, 0.86);
+  --c-glass: rgba(20, 32, 35, 0.72);
+  --c-brand-gradient: linear-gradient(135deg, #0f6a72 0%, #2b8f8b 55%, #5bb6c2 100%);
   background-color: var(--c-page);
 }
 
@@ -54,15 +66,45 @@ html {
   color: var(--c-ink-1);
 }
 
-/* html,
-body,
-#__nuxt {
-  width: 100%;
-  height: 100%;
-  margin: 0px;
-} */
+body {
+  background-color: var(--c-page);
+  /* 左上角的珊瑚色像日落，右上角的青色像海面，固定后滚动时页面不会发花 */
+  background-image:
+    radial-gradient(1000px 520px at 92% -8%, rgba(126, 200, 212, 0.28), transparent 62%),
+    radial-gradient(820px 460px at -6% 6%, rgba(242, 121, 90, 0.12), transparent 58%);
+  background-attachment: fixed;
+}
 
-/* 顶栏与页面主体共用的容器：改为居中限宽，给三栏布局留出足够宽度 */
+html.dark body {
+  background-image:
+    radial-gradient(1000px 520px at 92% -8%, rgba(69, 194, 187, 0.12), transparent 62%),
+    radial-gradient(820px 460px at -6% 6%, rgba(242, 121, 90, 0.08), transparent 58%);
+}
+
+::selection {
+  color: var(--c-ink-1);
+  background: var(--el-color-primary-light-8);
+}
+
+/* 顶栏与页面主体共用的容器：居中限宽，给三栏布局留出足够宽度 */
 .content-width {
   @apply mx-auto w-full max-w-[1400px] px-4;
+}
+
+/* 旅行主题的两个通用小元素：小字标签、品牌渐变块 */
+.travel-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--el-color-primary);
+}
+
+.travel-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-brand-gradient);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(14, 124, 134, 0.28);
 }

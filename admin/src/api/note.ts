@@ -24,3 +24,11 @@ export function updateNote(id: number, data: Partial<NotePayload>) {
 export function deleteNote(id: number) {
   return request.delete<never, { message: string }>(`/admin/notes/${id}`)
 }
+
+/** 上传详情页图片，返回可访问地址 */
+export function uploadNoteImage(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  // 不手动指定 Content-Type，交给浏览器带上 multipart boundary
+  return request.post<never, { url: string }>('/admin/note_images', form)
+}

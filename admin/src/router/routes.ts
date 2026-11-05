@@ -4,6 +4,12 @@ import Layout from '@/layout/index.vue'
 /** 无需权限即可访问的静态路由 */
 export const constantRoutes: RouteRecordRaw[] = [
   {
+    path: '/sso',
+    name: 'Sso',
+    component: () => import('@/views/sso/index.vue'),
+    meta: { title: '正在进入', public: true }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/login/index.vue'),

@@ -3,13 +3,14 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post   "auth/login",  to: "auth#login"
+      post   "auth/register", to: "auth#register"
       delete "auth/logout", to: "auth#logout"
       get    "auth/me",     to: "auth#me"
 
       get "menus", to: "menus#index"
 
       # 内容社区（app 模块）公开只读接口，无需登录
-      resources :notes, only: %i[index] do
+      resources :notes, only: %i[index show] do
         member do
           post   :like
           delete :unlike
@@ -19,6 +20,8 @@ Rails.application.routes.draw do
       # 管理后台内容管理，需要 content:note:* 权限
       namespace :admin do
         resources :notes, only: %i[index create update destroy]
+        # 内容详情页的多图上传：POST /api/v1/admin/note_images
+        resources :note_images, only: %i[create]
       end
 
       resource :profile, only: %i[show update], controller: "profiles" do

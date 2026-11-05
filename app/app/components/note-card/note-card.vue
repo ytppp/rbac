@@ -1,18 +1,18 @@
 <template>
   <el-card
     class="note-card cursor-pointer"
-    shadow="hover"
+    shadow="never"
     :body-style="{ padding: '0' }"
+    @click="goDetail"
   >
-    <div
-      class="min-h-120px w-full overflow-hidden bg-surface"
-      :style="{ aspectRatio: String(note.cover_ratio) }"
-    >
-      <img class="block h-full w-full object-cover" :src="note.cover" :alt="note.title" loading="lazy" />
+    <div class="note-cover" :style="{ aspectRatio: String(note.cover_ratio) }">
+      <img class="note-cover__img" :src="note.cover" :alt="note.title" loading="lazy" />
+      <span class="note-cover__shade" />
+      <span class="note-cover__channel">{{ note.channel }}</span>
     </div>
 
-    <div class="px-14px pb-14px pt-12px">
-      <h3 class="mt-0 mb-10px line-clamp-2 text-14px font-500 leading-[1.55] text-ink-1">{{ note.title }}</h3>
+    <div class="px-16px pb-15px pt-13px">
+      <h3 class="mt-0 mb-10px line-clamp-2 text-14px font-600 leading-[1.55] tracking-[0.01em] text-ink-1">{{ note.title }}</h3>
 
       <div class="flex items-center justify-between gap-8px">
         <span class="flex min-w-0 items-center gap-6px">
@@ -28,7 +28,7 @@
           <span class="overflow-hidden text-12px text-ellipsis whitespace-nowrap text-ink-2">{{ note.author }}</span>
         </span>
 
-        <el-button link class="note-like" :class="{ 'is-liked': liked }" :loading="submitting" @click="toggleLike">
+        <el-button link class="note-like" :class="{ 'is-liked': liked }" :loading="submitting" @click.stop="toggleLike">
           <icon :name="liked ? 'i-carbon:favorite-filled' : 'i-carbon:favorite'" />
           <span class="ml-3px">{{ likeText }}</span>
         </el-button>
@@ -63,6 +63,11 @@ watch(
 )
 
 const likeText = computed(() => formatLikes(likes.value))
+
+/** 点击卡片进入详情页 */
+function goDetail() {
+  navigateTo(`/explore/${props.note.id}`)
+}
 
 async function toggleLike() {
   if (submitting.value) return
@@ -99,33 +104,79 @@ async function toggleLike() {
 </script>
 
 <style scoped>
-/* 卡片外壳：去掉 el-card 默认边框，改为常驻轻阴影 + 柔和圆角，hover 时轻微上浮提亮 */
+/* 卡片外壳：暖白卡片 + 细边框，hover 时轻微上浮并让封面图放大 */
 .note-card {
-  border: none;
-  border-radius: 14px;
+  border: 1px solid var(--c-line);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--c-card);
+  box-shadow: 0 2px 6px var(--c-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .note-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+  border-color: var(--el-color-primary-light-7);
+  box-shadow: 0 18px 38px var(--c-shadow);
+}
+
+/* 封面：底部渐变保证频道标签可读，图片在 hover 时缓慢放大 */
+.note-cover {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.note-cover__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.note-card:hover .note-cover__img {
+  transform: scale(1.05);
+}
+.note-cover__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 30, 32, 0.26) 0%,
+    rgba(8, 30, 32, 0) 34%,
+    rgba(8, 30, 32, 0) 68%,
+    rgba(8, 30, 32, 0.2) 100%
+  );
+  pointer-events: none;
+}
+.note-cover__channel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--c-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--c-ink-1);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .note-avatar {
   font-size: 11px;
 }
 
-/* 点赞按钮：未赞为灰，已赞 / 悬停为品牌红 */
+/* 点赞按钮：未赞为灰，已赞 / 悬停为主色 */
 .note-card .note-like {
   color: var(--c-ink-2);
   font-size: 12px;
 }
 .note-card .note-like:hover {
-  color: #ff2e4d;
+  color: var(--el-color-primary);
 }
 .note-card .note-like.is-liked,
 .note-card .note-like.is-liked:hover {
-  color: #ff2e4d;
+  color: var(--el-color-primary);
 }
 </style>
