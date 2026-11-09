@@ -12,9 +12,9 @@
       </NuxtLink>
 
       <div class="detail-grid">
-        <!-- 视觉区：地图独占一块，照片放到下方独立相册卡片，互不遮挡 -->
+        <!-- 视觉区：相册以浮层形式浮在地图右下角，可收起查看完整地图 -->
         <div v-if="hasVisual" class="visual-col">
-          <div v-if="hasMap" class="map-stage" :class="{ 'map-stage--album': hasImages }">
+          <div v-if="hasMap" class="map-stage">
             <app-map ref="mapRef" :trip="mapSegments" />
 
             <div class="map-stage__badge">
@@ -23,9 +23,54 @@
               <span class="map-stage__dot" />
               <span>{{ mapSegments.length }} 段</span>
             </div>
+
+            <!-- 相册浮层：浮在地图右下角，默认展示 -->
+            <transition name="album-pop">
+              <div v-if="hasImages && showPhotos" class="map-stage__album">
+                <div class="map-stage__album-head">
+                  <span class="map-stage__album-title">
+                    <icon name="i-carbon:image" />
+                    <span>{{ activeBlockTitle || '旅途相册' }}</span>
+                  </span>
+                  <span class="map-stage__album-tools">
+                    <span v-if="activeImages.length" class="map-stage__album-hint" title="点击看大图">
+                      <icon name="i-carbon:zoom-in" />
+                    </span>
+                    <span v-else class="map-stage__album-hint">本段暂无图片</span>
+                    <button
+                      type="button"
+                      class="map-stage__icon-btn"
+                      title="隐藏图片"
+                      @click="showPhotos = false"
+                    >
+                      <icon name="i-carbon:view-off" />
+                    </button>
+                  </span>
+                </div>
+
+                <div v-if="activeImages.length" class="map-stage__album-body">
+                  <note-gallery v-model:index="imageIndex" :images="activeImages" :alt="note.title" />
+                </div>
+                <div v-else class="map-stage__album-empty">
+                  本段暂无图片，其他段共 {{ imageCount }} 张
+                </div>
+              </div>
+            </transition>
+
+            <!-- 图片隐藏后：右下角保留一个图标入口，点开恢复相册 -->
+            <button
+              v-if="hasImages && !showPhotos"
+              type="button"
+              class="map-stage__reopen"
+              title="查看图片"
+              @click="showPhotos = true"
+            >
+              <icon name="i-carbon:image" />
+            </button>
           </div>
 
-          <div v-if="hasImages" class="album-card" :class="{ 'album-card--solo': !hasMap }">
+          <!-- 没有地图时，相册独立成卡片 -->
+          <div v-if="hasImages && !hasMap" class="album-card">
             <div class="album-card__head">
               <span class="album-card__title">
                 <icon name="i-carbon:image" />
@@ -202,6 +247,9 @@ const firstImageBlock = blocks.value.findIndex((section) => section.images?.leng
 const currentBlock = ref(firstImageBlock >= 0 ? firstImageBlock : 0)
 const imageIndex = ref(0)
 const activeHeadingId = ref<string | null>(null)
+
+// 相册浮层显隐：默认展示，用户可收起看完整地图
+const showPhotos = ref(true)
 
 // 正文 Markdown 图片的大图预览（相册图片由 el-image 自带预览）
 const viewer = reactive({
@@ -393,18 +441,9 @@ function handleContentClick(event: MouseEvent) {
   box-shadow: 0 20px 50px var(--c-shadow);
 }
 
-/* 同页还有相册时，地图稍微收矮，保证「地图 + 相册」在桌面端能完整停在视口内 */
-.map-stage--album {
-  height: 360px;
-}
-
 @media (min-width: 768px) {
   .map-stage {
     height: 520px;
-  }
-
-  .map-stage--album {
-    height: 440px;
   }
 }
 
@@ -412,15 +451,161 @@ function handleContentClick(event: MouseEvent) {
   .map-stage {
     height: 560px;
   }
+}
 
-  .map-stage--album {
-    height: 420px;
+/* 相册浮层：浮在地图右下角，毛玻璃卡片 */
+.map-stage__album {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 2;
+  width: min(360px, calc(100% - 28px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 16px;
+  background: var(--c-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 16px 40px rgba(10, 40, 42, 0.18);
+}
+
+.map-stage__album-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.map-stage__album-title {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.map-stage__album-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-stage__album-tools {
+  display: inline-flex;
+  min-width: 0;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-stage__album-hint {
+  display: inline-flex;
+  max-width: 120px;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  color: var(--c-ink-3);
+  font-size: 14px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 头部图标按钮：与放大图标保持一致的纯图标样式 */
+.map-stage__icon-btn {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--c-ink-3);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.map-stage__icon-btn:hover {
+  background: var(--c-surface);
+  color: var(--c-ink-1);
+}
+
+.map-stage__album-body {
+  height: 130px;
+}
+
+.map-stage__album-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  color: var(--c-ink-3);
+  font-size: 12px;
+}
+
+@media (min-width: 768px) {
+  .map-stage__album-body {
+    height: 160px;
   }
 }
 
-/* 相册卡片：移到地图下方，不再遮挡任何地图信息 */
+@media (min-width: 1024px) {
+  .map-stage__album-body {
+    height: 180px;
+  }
+}
+
+/* 图片隐藏后：右下角图标入口 */
+.map-stage__reopen {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  background: var(--c-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--c-ink-1);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(10, 40, 42, 0.18);
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.map-stage__reopen:hover {
+  border-color: #20343a;
+  background: #20343a;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* 浮层展开 / 收起动画 */
+.album-pop-enter-active,
+.album-pop-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.album-pop-enter-from,
+.album-pop-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* 没有地图时，相册独立成卡片 */
 .album-card {
-  margin-top: 14px;
   overflow: hidden;
   border: 1px solid var(--c-line);
   border-radius: 22px;
@@ -460,10 +645,6 @@ function handleContentClick(event: MouseEvent) {
 }
 
 .album-card__body {
-  height: 200px;
-}
-
-.album-card--solo .album-card__body {
   height: 300px;
 }
 
@@ -478,16 +659,12 @@ function handleContentClick(event: MouseEvent) {
 
 @media (min-width: 768px) {
   .album-card__body {
-    height: 220px;
-  }
-
-  .album-card--solo .album-card__body {
     height: 420px;
   }
 }
 
 @media (min-width: 1024px) {
-  .album-card--solo .album-card__body {
+  .album-card__body {
     height: 520px;
   }
 }
