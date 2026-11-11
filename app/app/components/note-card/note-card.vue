@@ -6,7 +6,7 @@
     @click="goDetail"
   >
     <div class="note-cover" :style="{ aspectRatio: String(note.cover_ratio) }">
-      <img class="note-cover__img" :src="note.cover" :alt="note.title" loading="lazy" />
+      <el-image class="note-cover__img" :src="note.cover" :alt="note.title" fit="cover" />
       <span class="note-cover__shade" />
       <span class="note-cover__channel">{{ note.channel }}</span>
     </div>
@@ -131,10 +131,16 @@ async function toggleLike() {
   display: block;
   width: 100%;
   height: 100%;
+  background: var(--c-surface);
+}
+.note-cover__img :deep(.el-image__inner) {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
 }
-.note-card:hover .note-cover__img {
+.note-card:hover .note-cover__img :deep(.el-image__inner) {
   transform: scale(1.05);
 }
 .note-cover__shade {

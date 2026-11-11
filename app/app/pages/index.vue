@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-5">
     <!-- 旅行主题横幅：一张海岸公路图 + 深色渐变，保证文字可读 -->
     <section class="travel-hero">
-      <img class="travel-hero__img" :src="HERO_IMAGE" alt="海岸公路旅行风景" />
+      <el-image class="travel-hero__img" :src="HERO_IMAGE" alt="海岸公路旅行风景" fit="cover" />
       <div class="travel-hero__shade" />
       <div class="travel-hero__content">
         <p class="travel-hero__eyebrow">TRAVEL JOURNAL</p>
@@ -10,8 +10,12 @@
         <p class="travel-hero__desc">地图路线、沿途照片与旅行手记，都在这里。</p>
       </div>
       <div class="travel-hero__tags">
-        <span><icon name="i-carbon:map" /> 路线地图</span>
-        <span><icon name="i-carbon:camera" /> 沿途相册</span>
+        <el-tag class="travel-hero__tag" round effect="plain">
+          <icon name="i-carbon:map" /> 路线地图
+        </el-tag>
+        <el-tag class="travel-hero__tag" round effect="plain">
+          <icon name="i-carbon:camera" /> 沿途相册
+        </el-tag>
       </div>
     </section>
 
@@ -189,6 +193,11 @@ onBeforeUnmount(() => {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.travel-hero__img :deep(.el-image__inner) {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -245,18 +254,23 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.travel-hero__tags span {
+/* 横幅标签：用 el-tag 承载，覆盖成白色毛玻璃胶囊 */
+.travel-hero__tags .travel-hero__tag {
+  height: auto;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  --el-tag-text-color: #fff;
+  --el-tag-bg-color: rgba(255, 255, 255, 0.16);
+  --el-tag-border-color: rgba(255, 255, 255, 0.24);
+}
+
+.travel-hero__tag :deep(.el-tag__content) {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  font-size: 12px;
 }
 
 @media (max-width: 768px) {

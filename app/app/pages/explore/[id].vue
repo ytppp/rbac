@@ -33,18 +33,13 @@
                     <span>{{ activeBlockTitle || '旅途相册' }}</span>
                   </span>
                   <span class="map-stage__album-tools">
-                    <span v-if="activeImages.length" class="map-stage__album-hint" title="点击看大图">
-                      <icon name="i-carbon:zoom-in" />
-                    </span>
-                    <span v-else class="map-stage__album-hint">本段暂无图片</span>
-                    <button
-                      type="button"
+                    <el-button
                       class="map-stage__icon-btn"
                       title="隐藏图片"
                       @click="showPhotos = false"
                     >
                       <icon name="i-carbon:view-off" />
-                    </button>
+                    </el-button>
                   </span>
                 </div>
 
@@ -58,15 +53,15 @@
             </transition>
 
             <!-- 图片隐藏后：右下角保留一个图标入口，点开恢复相册 -->
-            <button
+            <el-button
               v-if="hasImages && !showPhotos"
-              type="button"
+              circle
               class="map-stage__reopen"
               title="查看图片"
               @click="showPhotos = true"
             >
               <icon name="i-carbon:image" />
-            </button>
+            </el-button>
           </div>
 
           <!-- 没有地图时，相册独立成卡片 -->
@@ -132,8 +127,7 @@
             </p>
             <ul class="toc__list">
               <li v-for="item in toc" :key="item.id">
-                <button
-                  type="button"
+                <el-button
                   class="toc-item"
                   :class="{ 'is-active': item.id === activeHeadingId }"
                   :style="{ paddingLeft: `${10 + (item.level - 1) * 12}px` }"
@@ -141,7 +135,7 @@
                 >
                   <span class="toc__dot" />
                   <span class="toc__text">{{ item.text }}</span>
-                </button>
+                </el-button>
               </li>
             </ul>
           </nav>
@@ -502,39 +496,24 @@ function handleContentClick(event: MouseEvent) {
   gap: 4px;
 }
 
-.map-stage__album-hint {
-  display: inline-flex;
-  max-width: 120px;
-  align-items: center;
-  gap: 3px;
-  overflow: hidden;
-  color: var(--c-ink-3);
-  font-size: 14px;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* 头部图标按钮：与放大图标保持一致的纯图标样式 */
 .map-stage__icon-btn {
-  display: inline-flex;
   width: 26px;
   height: 26px;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  min-width: 26px;
+  padding: 0;
   border-radius: 8px;
-  background: transparent;
-  color: var(--c-ink-3);
   font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.map-stage__icon-btn:hover {
-  background: var(--c-surface);
-  color: var(--c-ink-1);
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-text-color: var(--c-ink-3);
+  --el-button-hover-bg-color: var(--c-surface);
+  --el-button-hover-border-color: transparent;
+  --el-button-hover-text-color: var(--c-ink-1);
+  --el-button-active-bg-color: var(--c-surface);
+  --el-button-active-border-color: transparent;
+  --el-button-active-text-color: var(--c-ink-1);
+  --el-button-outline-color: transparent;
 }
 
 .map-stage__album-body {
@@ -568,27 +547,27 @@ function handleContentClick(event: MouseEvent) {
   right: 14px;
   bottom: 14px;
   z-index: 3;
-  display: inline-flex;
   width: 40px;
   height: 40px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 50%;
-  background: var(--c-glass);
+  font-size: 18px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: var(--c-ink-1);
-  font-size: 18px;
-  cursor: pointer;
   box-shadow: 0 6px 18px rgba(10, 40, 42, 0.18);
-  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  transition: transform 0.15s ease;
+  --el-button-bg-color: var(--c-glass);
+  --el-button-border-color: rgba(255, 255, 255, 0.45);
+  --el-button-text-color: var(--c-ink-1);
+  --el-button-hover-bg-color: #20343a;
+  --el-button-hover-border-color: #20343a;
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: #20343a;
+  --el-button-active-border-color: #20343a;
+  --el-button-active-text-color: #ffffff;
+  --el-button-outline-color: transparent;
 }
 
 .map-stage__reopen:hover {
-  border-color: #20343a;
-  background: #20343a;
-  color: #ffffff;
   transform: translateY(-2px);
 }
 
@@ -759,19 +738,35 @@ function handleContentClick(event: MouseEvent) {
 
 .toc-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
   width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  gap: 8px;
   padding: 6px 10px;
-  border: none;
   border-radius: 9px;
-  background: transparent;
-  color: var(--c-ink-2);
   font-size: 13px;
   line-height: 20px;
   text-align: left;
-  cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
+  /* 用 el-button 的配色变量覆盖默认样式：透明底、悬停浅底 */
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+  --el-button-text-color: var(--c-ink-2);
+  --el-button-hover-bg-color: var(--c-surface-focus);
+  --el-button-hover-border-color: transparent;
+  --el-button-hover-text-color: var(--c-ink-1);
+  --el-button-active-bg-color: var(--c-surface-focus);
+  --el-button-active-border-color: transparent;
+  --el-button-active-text-color: var(--c-ink-1);
+  --el-button-outline-color: transparent;
+}
+
+/* el-button 会把内容包一层 span，这里让它撑满以保留「圆点 + 文字」布局 */
+.toc-item :deep(> span) {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
 }
 
 .toc__dot {
@@ -783,15 +778,14 @@ function handleContentClick(event: MouseEvent) {
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.toc-item:hover {
-  background: var(--c-surface-focus);
-  color: var(--c-ink-1);
-}
-
 .toc-item.is-active {
   background: var(--el-color-primary-light-9);
   color: var(--el-color-primary);
   font-weight: 600;
+  --el-button-hover-bg-color: var(--el-color-primary-light-9);
+  --el-button-hover-text-color: var(--el-color-primary);
+  --el-button-active-bg-color: var(--el-color-primary-light-9);
+  --el-button-active-text-color: var(--el-color-primary);
 }
 
 .toc-item.is-active .toc__dot {

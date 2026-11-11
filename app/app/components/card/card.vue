@@ -1,30 +1,29 @@
 <template>
-  <div
-    class="flex flex-col w-full h-full overflow-hidden cursor-pointer"
-    :class="[
-      {
-        'border-1 border-solid border-line': border,
-        'rounded-lg': rounded,
-      },
-      shadowClass,
-    ]"
+  <!-- 统一用 el-card 承载：header / 内容 / footer 三块，样式通过 class 透传 -->
+  <el-card
+    class="app-card"
+    :class="{ 'app-card--no-border': !border, 'app-card--rounded': rounded }"
+    :shadow="shadow"
   >
-    <!-- 卡片头部 -->
-    <div :class="headerClass">
-      <template v-if="header">{{ header }}</template>
-      <slot name="header" v-else></slot>
-    </div>
-    <!-- 卡片内容 -->
-    <div class="flex-1" :class="bodyClass" :style="bodyStyle">
+    <template v-if="header || $slots.header" #header>
+      <div :class="headerClass">
+        <template v-if="header">{{ header }}</template>
+        <slot v-else name="header" />
+      </div>
+    </template>
+
+    <div :class="bodyClass" :style="bodyStyle">
       <template v-if="content">{{ content }}</template>
-      <slot v-else></slot>
+      <slot v-else />
     </div>
-    <!-- 卡片底部 -->
-    <div :class="footerClass">
-      <template v-if="footer">{{ footer }}</template>
-      <slot name="footer" v-else></slot>
-    </div>
-  </div>
+
+    <template v-if="footer || $slots.footer" #footer>
+      <div :class="footerClass">
+        <template v-if="footer">{{ footer }}</template>
+        <slot v-else name="footer" />
+      </div>
+    </template>
+  </el-card>
 </template>
 
 <script setup lang="ts">
@@ -43,23 +42,27 @@ interface CardProps {
   footerClass?: string // footer 的 CSS 类名
 }
 
-const props = withDefaults(defineProps<CardProps>(), {
+withDefaults(defineProps<CardProps>(), {
   border: true,
   rounded: true,
   shadow: 'always',
 })
-
-const shadowClass = computed(() => {
-  const str = 'transition-shadow duration-300'
-  switch (props.shadow) {
-    case 'never':
-      return `shadow-none`
-    case 'always':
-      return `shadow-lg ${str}`
-    case 'hover':
-      return `hover:shadow-lg ${str}`
-    default:
-      return 'shadow-none'
-  }
-})
 </script>
+
+<style scoped>
+/* el-card 默认内边距 20px，这里归零，由调用方的 bodyClass 控制间距 */
+.app-card {
+  width: 100%;
+  --el-card-padding: 0;
+  --el-card-border-color: var(--c-line);
+  --el-card-bg-color: var(--c-card);
+}
+
+.app-card--no-border {
+  border: none;
+}
+
+.app-card--rounded {
+  border-radius: 8px;
+}
+</style>
