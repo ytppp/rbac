@@ -2,13 +2,13 @@
   <div class="w-full">
     <!-- 内容不存在 / 请求失败 -->
     <div v-if="loadError || !note" class="py-80px">
-      <el-empty description="内容不存在或已被删除" />
+      <el-empty :description="$t('detail.notFound')" />
     </div>
 
     <div v-else class="detail">
-      <NuxtLink to="/" class="detail-back">
+      <NuxtLink :to="localePath('/')" class="detail-back">
         <icon name="i-carbon:arrow-left" />
-        <span>返回发现</span>
+        <span>{{ $t('detail.back') }}</span>
       </NuxtLink>
 
       <div class="detail-grid">
@@ -19,9 +19,9 @@
 
             <div class="map-stage__badge">
               <icon name="i-carbon:map" />
-              <span>行程地图</span>
+              <span>{{ $t('detail.map') }}</span>
               <span class="map-stage__dot" />
-              <span>{{ mapSegments.length }} 段</span>
+              <span>{{ $t('detail.segmentCount', { count: mapSegments.length }) }}</span>
             </div>
 
             <!-- 相册浮层：浮在地图右下角，默认展示 -->
@@ -30,12 +30,12 @@
                 <div class="map-stage__album-head">
                   <span class="map-stage__album-title">
                     <icon name="i-carbon:image" />
-                    <span>{{ activeBlockTitle || '旅途相册' }}</span>
+                    <span>{{ activeBlockTitle || $t('detail.album') }}</span>
                   </span>
                   <span class="map-stage__album-tools">
                     <el-button
                       class="map-stage__icon-btn"
-                      title="隐藏图片"
+                      :title="$t('detail.hidePhotos')"
                       @click="showPhotos = false"
                     >
                       <icon name="i-carbon:view-off" />
@@ -47,7 +47,7 @@
                   <note-gallery v-model:index="imageIndex" :images="activeImages" :alt="note.title" />
                 </div>
                 <div v-else class="map-stage__album-empty">
-                  本段暂无图片，其他段共 {{ imageCount }} 张
+                  {{ $t('detail.noPhotosOther', { count: imageCount }) }}
                 </div>
               </div>
             </transition>
@@ -57,7 +57,7 @@
               v-if="hasImages && !showPhotos"
               circle
               class="map-stage__reopen"
-              title="查看图片"
+              :title="$t('detail.showPhotos')"
               @click="showPhotos = true"
             >
               <icon name="i-carbon:image" />
@@ -69,14 +69,14 @@
             <div class="album-card__head">
               <span class="album-card__title">
                 <icon name="i-carbon:image" />
-                <span>{{ activeBlockTitle || '旅途相册' }}</span>
+                <span>{{ activeBlockTitle || $t('detail.album') }}</span>
               </span>
               <span class="album-card__hint">
                 <template v-if="activeImages.length">
-                  点击看大图
+                  {{ $t('detail.zoomIn') }}
                   <template v-if="activeImages.length > 1"> · {{ imageIndex + 1 }} / {{ activeImages.length }}</template>
                 </template>
-                <template v-else>本段暂无图片</template>
+                <template v-else>{{ $t('detail.noPhotos') }}</template>
               </span>
             </div>
 
@@ -84,7 +84,7 @@
               <note-gallery v-model:index="imageIndex" :images="activeImages" :alt="note.title" />
             </div>
             <div v-else class="album-card__empty">
-              本段暂无图片，其他段共 {{ imageCount }} 张
+              {{ $t('detail.noPhotosOther', { count: imageCount }) }}
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@
               <span class="meta-dot" />
               <span class="flex items-center gap-1">
                 <icon name="i-carbon:road" />
-                {{ mapSegments.length }} 段行程
+                {{ $t('detail.tripCount', { count: mapSegments.length }) }}
               </span>
             </template>
           </div>
@@ -123,7 +123,7 @@
           <nav v-if="toc.length" class="toc">
             <p class="toc__title">
               <icon name="i-carbon:list-checked" />
-              <span>行程目录</span>
+              <span>{{ $t('detail.toc') }}</span>
             </p>
             <ul class="toc__list">
               <li v-for="item in toc" :key="item.id">
@@ -150,7 +150,7 @@
               <div v-if="block.html" v-html="block.html" />
             </section>
           </article>
-          <el-empty v-else description="暂无正文内容" />
+          <el-empty v-else :description="$t('detail.noContent')" />
         </div>
       </div>
 
@@ -180,6 +180,7 @@ import { renderMarkdown } from '~/utils/markdown'
 definePageMeta({ hideSiteInfo: true })
 
 const route = useRoute()
+const localePath = useLocalePath()
 const noteId = String(route.params.id)
 
 const { data: note, error: loadError } = await useAsyncData<NoteDetail>(

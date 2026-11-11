@@ -3,13 +3,13 @@
     <div class="header-shell">
       <div class="flex-x-center h-[64px]">
         <div class="content-width flex-x-between h-full">
-          <NuxtLink to="/" class="flex flex-none items-center gap-10px text-ink-1 no-underline">
+          <NuxtLink :to="localePath('/')" class="flex flex-none items-center gap-10px text-ink-1 no-underline">
             <span class="travel-mark brand-mark">
               <icon name="i-carbon:compass" />
             </span>
             <span class="brand-text">
-              <span class="brand-name">发现</span>
-              <span class="brand-sub">TRAVEL NOTES</span>
+              <span class="brand-name">{{ $t('brand.name') }}</span>
+              <span class="brand-sub">{{ $t('brand.sub') }}</span>
             </span>
           </NuxtLink>
 
@@ -17,7 +17,7 @@
             <el-input
               v-model="keyword"
               class="search-input"
-              placeholder="搜索目的地、路线或旅行灵感"
+              :placeholder="$t('header.searchPlaceholder')"
               clearable
             >
               <template #prefix>
@@ -35,11 +35,11 @@
               <template v-if="isLoggedIn">
                 <el-button class="admin-entry" round @click="goAdmin">
                   <icon name="i-carbon:dashboard" />
-                  <span class="ml-1 max-md:hidden">管理后台</span>
+                  <span class="ml-1 max-md:hidden">{{ $t('header.admin') }}</span>
                 </el-button>
                 <el-button type="primary" round>
                   <icon name="i-carbon:add" />
-                  <span class="ml-1">发布</span>
+                  <span class="ml-1">{{ $t('header.publish') }}</span>
                 </el-button>
                 <!-- 已登录：头像 + 昵称，点开下拉可退出 -->
                 <el-dropdown @command="handleUserCommand">
@@ -55,14 +55,14 @@
                     <el-dropdown-menu>
                       <el-dropdown-item command="logout">
                         <icon name="i-carbon:logout" />
-                        <span class="ml-1">退出登录</span>
+                        <span class="ml-1">{{ $t('header.logout') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
               </template>
               <!-- 未登录：登录入口，登录后回到当前页 -->
-              <el-button v-else type="primary" round @click="goLogin">登录</el-button>
+              <el-button v-else type="primary" round @click="goLogin">{{ $t('header.login') }}</el-button>
             </div>
           </div>
         </div>
@@ -87,14 +87,16 @@ const headerShown = useState('header-shown', () => true)
 const { keyword } = useFeed()
 const { user, token, isLoggedIn, fetchMe, logout } = useAuth()
 const runtimeConfig = useRuntimeConfig()
+const { t } = useI18n()
 
 const route = useRoute()
+const localePath = useLocalePath()
 
 /** 登录后跳回当前页面 */
-const loginTo = computed(() => ({ path: '/login', query: { redirect: route.fullPath } }))
+const loginTo = computed(() => localePath({ path: '/login', query: { redirect: route.fullPath } }))
 
 /** 头像里的字：取昵称首字，没昵称就取邮箱首字母 */
-const avatarText = computed(() => (user.value?.name || user.value?.email || '我').slice(0, 1))
+const avatarText = computed(() => (user.value?.name || user.value?.email || t('header.me')).slice(0, 1))
 
 /** 无上传头像时，回退到「渐变底 + 首字」 */
 const avatarStyle = computed(() =>

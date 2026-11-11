@@ -2,19 +2,19 @@
   <div class="flex flex-col gap-5">
     <!-- 旅行主题横幅：一张海岸公路图 + 深色渐变，保证文字可读 -->
     <section class="travel-hero">
-      <el-image class="travel-hero__img" :src="HERO_IMAGE" alt="海岸公路旅行风景" fit="cover" />
+      <el-image class="travel-hero__img" :src="HERO_IMAGE" :alt="$t('home.heroAlt')" fit="cover" />
       <div class="travel-hero__shade" />
       <div class="travel-hero__content">
-        <p class="travel-hero__eyebrow">TRAVEL JOURNAL</p>
-        <h1 class="travel-hero__title">把每一次出发，收藏成故事</h1>
-        <p class="travel-hero__desc">地图路线、沿途照片与旅行手记，都在这里。</p>
+        <p class="travel-hero__eyebrow">{{ $t('home.eyebrow') }}</p>
+        <h1 class="travel-hero__title">{{ $t('home.title') }}</h1>
+        <p class="travel-hero__desc">{{ $t('home.desc') }}</p>
       </div>
       <div class="travel-hero__tags">
         <el-tag class="travel-hero__tag" round effect="plain">
-          <icon name="i-carbon:map" /> 路线地图
+          <icon name="i-carbon:map" /> {{ $t('home.tagRoute') }}
         </el-tag>
         <el-tag class="travel-hero__tag" round effect="plain">
-          <icon name="i-carbon:camera" /> 沿途相册
+          <icon name="i-carbon:camera" /> {{ $t('home.tagAlbum') }}
         </el-tag>
       </div>
     </section>
@@ -26,7 +26,7 @@
           v-if="error"
           class="mx-auto mt-60px max-w-[560px]"
           type="error"
-          title="内容加载失败，请确认 api 服务已启动"
+          :title="$t('home.loadFailed')"
           :closable="false"
           show-icon
         />
@@ -65,11 +65,11 @@
 
         <div v-else-if="pending" class="flex-y-center justify-center gap-2 py-120px text-14px text-ink-3">
           <el-icon class="is-loading" :size="16"><icon name="i-carbon:circle-dash" /></el-icon>
-          <span>加载中…</span>
+          <span>{{ $t('home.loading') }}</span>
         </div>
 
         <div v-else class="py-80px">
-          <el-empty description="没有找到相关内容，换个关键词试试" />
+          <el-empty :description="$t('home.empty')" />
         </div>
 
         <!-- 无限下拉的「哨兵」：它一滚进视口附近，就自动去加载下一页 -->
@@ -77,9 +77,9 @@
           <template v-if="notes.length">
             <template v-if="pending">
               <el-icon class="is-loading" :size="14"><icon name="i-carbon:circle-dash" /></el-icon>
-              <span>正在加载更多…</span>
+              <span>{{ $t('home.loadingMore') }}</span>
             </template>
-            <span v-else-if="!hasMore">~我是有底线的~</span>
+            <span v-else-if="!hasMore">{{ $t('home.end') }}</span>
           </template>
         </div>
         <site-info class="pt-6 lg:hidden" />

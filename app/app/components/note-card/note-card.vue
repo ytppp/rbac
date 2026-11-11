@@ -47,6 +47,8 @@ const props = defineProps<{ note: Note }>()
 
 const route = useRoute()
 const { isLoggedIn, authHeaders } = useAuth()
+const { locale } = useI18n()
+const localePath = useLocalePath()
 
 // 本地状态：从后端返回的数据初始化，点赞后本地即时更新，避免整页刷新
 const liked = ref(props.note.liked)
@@ -62,11 +64,11 @@ watch(
   }
 )
 
-const likeText = computed(() => formatLikes(likes.value))
+const likeText = computed(() => formatLikes(likes.value, locale.value))
 
 /** 点击卡片进入详情页 */
 function goDetail() {
-  navigateTo(`/explore/${props.note.id}`)
+  navigateTo(localePath(`/explore/${props.note.id}`))
 }
 
 async function toggleLike() {
@@ -74,7 +76,7 @@ async function toggleLike() {
 
   // 未登录不能点赞：引导去登录，登录后回到当前页
   if (!isLoggedIn.value) {
-    await navigateTo({ path: '/login', query: { redirect: route.fullPath } })
+    await navigateTo(localePath({ path: '/login', query: { redirect: route.fullPath } }))
     return
   }
 

@@ -34,37 +34,36 @@ const isDark = useDark()
 const interval = 1000 * 60 // 1分钟
 const currentTheme = ref<ThemeType>(Theme.light)
 const isAutoToggleTheme = useStorage('is-auto-toggale-theme', false)
+const { t } = useI18n()
 const themeConfig = {
   [Theme.auto]: {
-    label: 'Auto',
     icon: 'i-carbon:window-black-saturation',
   },
   [Theme.light]: {
-    label: 'Light',
     icon: 'i-carbon:sun',
   },
   [Theme.dark]: {
-    label: 'Dark',
     icon: 'i-carbon:moon',
   },
 }
-const themeList: ThemeItem[] = [
+// 名称跟随当前语言
+const themeList = computed<ThemeItem[]>(() => [
   {
-    label: themeConfig[Theme.auto].label,
+    label: t('theme.auto'),
     value: Theme.auto,
     icon: themeConfig[Theme.auto].icon,
   },
   {
-    label: themeConfig[Theme.light].label,
+    label: t('theme.light'),
     value: Theme.light,
     icon: themeConfig[Theme.light].icon,
   },
   {
-    label: themeConfig[Theme.dark].label,
+    label: t('theme.dark'),
     value: Theme.dark,
     icon: themeConfig[Theme.dark].icon,
   },
-]
+])
 
 // const themeLabel = computed(() => themeConfig[currentTheme.value].label)
 const themeIcon = computed(() => {

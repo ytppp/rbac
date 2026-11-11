@@ -12,23 +12,25 @@
     <!-- 联系与备案信息 -->
     <card :border="true" rounded shadow="never" class="mt-3 site-panel" body-class="!p-14px">
       <div class="leading-[22px]">
-        <p class="m-0">投稿邮箱：hi@example.com</p>
-        <p class="m-0 mt-6px">电话：010-8888 8888</p>
-        <p class="m-0 mt-6px">ICP 备案号：沪 ICP 备 00000000 号-1</p>
-        <p class="m-0 mt-6px">公安网安备 31000000000000 号</p>
+        <p class="m-0">{{ $t('site.email') }}</p>
+        <p class="m-0 mt-6px">{{ $t('site.phone') }}</p>
+        <p class="m-0 mt-6px">{{ $t('site.icp') }}</p>
+        <p class="m-0 mt-6px">{{ $t('site.police') }}</p>
       </div>
     </card>
 
-    <p class="mt-4 mb-0 text-center leading-[22px] text-ink-3">© 2026 发现</p>
+    <p class="mt-4 mb-0 text-center leading-[22px] text-ink-3">{{ $t('site.copyright') }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 /** 备案号、联系方式等都是占位内容，上线前替换成真实信息 */
-const linkRows = [
-  ['用户协议', '营业执照', '隐私政策', '关于我们'],
-  ['使用指南', '友情链接', '更多文章']
-]
+const linkRows = computed(() => [
+  [t('site.linkAgreement'), t('site.linkLicense'), t('site.linkPrivacy'), t('site.linkAbout')],
+  [t('site.linkGuide'), t('site.linkFriends'), t('site.linkMore')],
+])
 </script>
 
 <style scoped>

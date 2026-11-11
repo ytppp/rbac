@@ -7,16 +7,16 @@
       class="absolute top-[10px] left-2 flex-x-between mx-auto py-2 px-3 w-[30%] bg-black opacity-60 rounded-md shadow-xl text-white pointer-events-none"
     >
       <div>
-        <h3 class="text-sm font-bold p-0 m-0">{{ $t('trans0002') }}</h3>
+        <h3 class="text-sm font-bold p-0 m-0">{{ $t('map.notice') }}</h3>
         <ul class="list-none p-0 mt-2 mb-0 text-xs">
-          <li>{{ $t('trans0003') }}</li>
-          <li>{{ $t('trans0004') }}</li>
-          <li>{{ $t('trans0005') }}</li>
-          <li>{{ $t('trans0006') }}</li>
+          <li>{{ $t('map.noticeClickAdd') }}</li>
+          <li>{{ $t('map.noticeRightClickDelete') }}</li>
+          <li>{{ $t('map.noticeDrag') }}</li>
+          <li>{{ $t('map.noticeDoubleClickInfo') }}</li>
         </ul>
       </div>
       <div>
-        <el-button type="primary" round>{{ $t('trans0007') }}</el-button>
+        <el-button type="primary" round>{{ $t('map.save') }}</el-button>
       </div>
     </div>
     <transition name="el-fade-in-linear">
@@ -26,7 +26,7 @@
         :class="{ 'w-[30%]': !isFold }"
       >
         <div class="text-right">
-          <el-tooltip :content="$t('trans0015')" placement="bottom" effect="light">
+          <el-tooltip :content="$t('map.expand')" placement="bottom" effect="light">
             <icon
               v-show="isFold"
               class="text-2xl cursor-pointer"
@@ -34,7 +34,7 @@
               @click="isFold = false"
             />
           </el-tooltip>
-          <el-tooltip :content="$t('trans0016')" placement="bottom" effect="light">
+          <el-tooltip :content="$t('map.fold')" placement="bottom" effect="light">
             <icon
               v-show="!isFold"
               class="text-2xl cursor-pointer"
@@ -42,7 +42,7 @@
               @click="isFold = true"
             />
           </el-tooltip>
-          <el-tooltip :content="$t('trans0017')" placement="bottom" effect="light">
+          <el-tooltip :content="$t('map.close')" placement="bottom" effect="light">
             <icon
               class="text-2xl cursor-pointer"
               name="i-carbon:close"
@@ -52,18 +52,18 @@
         </div>
         <el-collapse-transition>
           <el-tabs v-show="!isFold" v-model="activeTabName">
-            <el-tab-pane :label="$t('trans0008')" :name="TabName.Config">
+            <el-tab-pane :label="$t('map.config')" :name="TabName.Config">
               <el-form :model="form" label-width="auto">
-                <el-form-item :label="$t('trans0010')">
+                <el-form-item :label="$t('map.position')">
                   <el-input v-model="form.position" disabled />
                 </el-form-item>
-                <el-form-item :label="$t('trans0011')">
+                <el-form-item :label="$t('map.coordinate')">
                   <el-input v-model="form.coordinate" disabled />
                 </el-form-item>
-                <el-form-item :label="$t('trans0012')">
+                <el-form-item :label="$t('map.description')">
                   <el-input v-model="form.desc" type="textarea" />
                 </el-form-item>
-                <el-form-item :label="$t('trans0013')">
+                <el-form-item :label="$t('map.photo')">
                   <el-upload
                     drag
                     action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
@@ -77,12 +77,12 @@
                   </el-upload>
                 </el-form-item>
                 <el-form-item>
-                  <el-button type="primary" @click="onSubmit">{{ $t('trans0007') }}</el-button>
-                  <el-button @click="closeEditMarkerDialog">{{ $t('trans0014') }}</el-button>
+                  <el-button type="primary" @click="onSubmit">{{ $t('map.save') }}</el-button>
+                  <el-button @click="closeEditMarkerDialog">{{ $t('map.cancel') }}</el-button>
                 </el-form-item>
               </el-form>
             </el-tab-pane>
-            <el-tab-pane :label="$t('trans0009')" :name="TabName.Preview">Preview</el-tab-pane>
+            <el-tab-pane :label="$t('map.preview')" :name="TabName.Preview">{{ $t('map.preview') }}</el-tab-pane>
           </el-tabs>
         </el-collapse-transition>
       </div>
@@ -258,7 +258,7 @@ const addMarker = async (e: AddMarkerEvent) => {
     }
     const markerOptions: MarkerConfig = {
       position: e.lnglat,
-      title: t('trans0018'),
+      title: t('map.doubleClickInfo'),
       offset: new amap.Pixel(-12, -12),
       cursor: 'pointer',
       extData: {

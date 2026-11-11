@@ -1,13 +1,13 @@
 <template>
   <div class="auth-page relative flex min-h-screen items-center justify-center px-24px py-40px">
     <!-- 左上角品牌 logo，右上角主题 / 语言切换 -->
-    <NuxtLink to="/" class="absolute left-24px top-16px flex items-center gap-10px text-ink-1 no-underline">
+    <NuxtLink :to="localePath('/')" class="absolute left-24px top-16px flex items-center gap-10px text-ink-1 no-underline">
       <span class="travel-mark h-30px w-30px rounded-9px text-17px">
         <icon name="i-carbon:compass" />
       </span>
       <span class="flex flex-col leading-[1.15] max-md:hidden">
-        <span class="text-17px font-600 tracking-[1px]">发现</span>
-        <span class="text-[9px] tracking-[0.24em] text-ink-3">TRAVEL NOTES</span>
+        <span class="text-17px font-600 tracking-[1px]">{{ $t('brand.name') }}</span>
+        <span class="text-[9px] tracking-[0.24em] text-ink-3">{{ $t('brand.sub') }}</span>
       </span>
     </NuxtLink>
 
@@ -23,6 +23,11 @@
     </el-card>
   </div>
 </template>
+
+<script setup lang="ts">
+// 品牌 logo 回首页时保留当前语言前缀
+const localePath = useLocalePath()
+</script>
 
 <style scoped>
 /* 登录 / 注册页背景：沿用全站的暖沙底，再叠一层海面与日落光晕 */

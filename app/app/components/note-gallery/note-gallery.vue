@@ -5,7 +5,7 @@
       v-if="images.length === 1"
       class="note-gallery__img"
       :src="images[0]"
-      :alt="alt"
+      :alt="altText"
       fit="cover"
       :preview-src-list="images"
       :initial-index="0"
@@ -26,7 +26,7 @@
         <el-image
           class="note-gallery__img"
           :src="image"
-          :alt="`${alt} ${i + 1}`"
+          :alt="t('gallery.altIndex', { alt: altText, index: i + 1 })"
           fit="cover"
           :preview-src-list="images"
           :initial-index="i"
@@ -47,9 +47,13 @@ const props = withDefaults(
     index?: number
     alt?: string
   }>(),
-  { index: 0, alt: '图片' },
+  { index: 0, alt: '' },
 )
 const emit = defineEmits<{ 'update:index': [value: number] }>()
+
+const { t } = useI18n()
+/** 没传 alt 时用通用文案，随语言切换 */
+const altText = computed(() => props.alt || t('gallery.alt'))
 
 // el-carousel 的实例类型没有直接导出，这里只用到 setActiveItem
 const carouselRef = ref<any>(null)

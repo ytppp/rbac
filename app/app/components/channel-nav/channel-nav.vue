@@ -20,8 +20,8 @@
     :class="headerShown ? 'lg:top-66px' : 'lg:top-0'"
   >
     <div class="mb-2 px-3">
-      <p class="travel-eyebrow m-0">DESTINATIONS</p>
-      <p class="m-0 mt-1 text-13px font-600 text-ink-1">旅行频道</p>
+      <p class="travel-eyebrow m-0">{{ $t('channel.eyebrow') }}</p>
+      <p class="m-0 mt-1 text-13px font-600 text-ink-1">{{ $t('channel.title') }}</p>
     </div>
     <card :border="true" shadow="never" class="channel-card" body-class="!p-2">
       <el-menu :default-active="channel" class="channel-menu" @select="handleSelect">
