@@ -12,6 +12,9 @@
         <el-select v-model="query.channel" placeholder="全部频道" clearable style="width: 150px">
           <el-option v-for="item in channels" :key="item" :label="item" :value="item" />
         </el-select>
+        <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 130px">
+          <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
         <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
         <el-button :icon="Refresh" @click="handleReset">重置</el-button>
 
@@ -44,13 +47,24 @@
         </el-table-column>
         <el-table-column prop="author_name" label="作者" width="120" />
         <el-table-column prop="channel" label="频道" width="100" />
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag size="small" :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="likes_count" label="点赞数" width="90" />
         <el-table-column prop="sort" label="排序" width="80" />
         <el-table-column label="创建时间" width="170">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="230" fixed="right">
           <template #default="{ row }">
+            <el-button v-if="row.status === 'pending'" v-perm="'content:note:update'" link type="success" @click="changeStatus(row, 'published')">
+              通过
+            </el-button>
+            <el-button v-else-if="row.status === 'published'" v-perm="'content:note:update'" link type="warning" @click="changeStatus(row, 'archived')">
+              下架
+            </el-button>
             <el-button v-perm="'content:note:update'" link type="primary" @click="openEdit(row)">
               编辑
             </el-button>
@@ -98,6 +112,29 @@
           >
             <el-option v-for="item in channelOptions" :key="item" :label="item" :value="item" />
           </el-select>
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select v-model="form.status" style="width: 200px">
+            <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+          <span class="hint block">待审内容需要先通过审核，才会出现在内容社区</span>
+        </el-form-item>
+
+        <el-form-item label="标签">
+          <el-select
+            v-model="form.tags"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            :reserve-keyword="false"
+            placeholder="选择已有标签，或输入新标签后回车"
+            style="width: 420px"
+          >
+            <el-option v-for="item in tagOptions" :key="item.id" :label="item.name" :value="item.name" />
+          </el-select>
+          <span class="hint block">最多 10 个；直接输入新名称回车即可创建</span>
         </el-form-item>
 
         <el-form-item label="开篇正文">
@@ -281,6 +318,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Close, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
 import { createNote, deleteNote, fetchNotes, updateNote, uploadNoteImage } from '@/api/note'
+import { fetchTags, type AdminTag } from '@/api/tag'
 import LocationPicker from '@/components/LocationPicker.vue'
 import { useUserStore } from '@/stores/user'
 import { formatTime } from '@/utils/format'
@@ -290,7 +328,8 @@ import type {
   NotePayload,
   NoteSection,
   NoteSectionPoint,
-  NoteSectionType
+  NoteSectionType,
+  NoteStatus
 } from '@/types'
 
 const userStore = useUserStore()
@@ -346,13 +385,39 @@ const isCreate = ref(true)
 const list = ref<AdminNote[]>([])
 const total = ref(0)
 const channels = ref<string[]>([])
+// 标签下拉：可复选已有标签，也可以直接输入新标签
+const tagOptions = ref<AdminTag[]>([])
 
 const query = reactive({
   page: 1,
   per_page: 10,
   keyword: '',
-  channel: undefined as string | undefined
+  channel: undefined as string | undefined,
+  status: undefined as NoteStatus | undefined
 })
+
+// 内容状态：草稿 / 待审 / 已发布 / 已下架
+const statusOptions: { label: string, value: NoteStatus }[] = [
+  { label: '草稿', value: 'draft' },
+  { label: '待审', value: 'pending' },
+  { label: '已发布', value: 'published' },
+  { label: '已下架', value: 'archived' }
+]
+
+const STATUS_MAP: Record<NoteStatus, { label: string, type: 'info' | 'warning' | 'success' | 'danger' }> = {
+  draft: { label: '草稿', type: 'info' },
+  pending: { label: '待审', type: 'warning' },
+  published: { label: '已发布', type: 'success' },
+  archived: { label: '已下架', type: 'danger' }
+}
+
+function statusLabel(status: NoteStatus) {
+  return STATUS_MAP[status]?.label ?? status
+}
+
+function statusType(status: NoteStatus) {
+  return STATUS_MAP[status]?.type ?? 'info'
+}
 
 const formRef = ref<FormInstance>()
 const form = reactive({
@@ -365,6 +430,8 @@ const form = reactive({
   channel: '',
   sort: 0,
   content: '',
+  status: 'published' as NoteStatus,
+  tags: [] as string[],
   sections: [createSection()] as SectionForm[]
 })
 
@@ -399,7 +466,8 @@ async function loadList() {
       page: query.page,
       per_page: query.per_page,
       keyword: query.keyword || undefined,
-      channel: query.channel
+      channel: query.channel,
+      status: query.status
     })
     list.value = result.items
     channels.value = result.channels
@@ -417,6 +485,7 @@ function handleSearch() {
 function handleReset() {
   query.keyword = ''
   query.channel = undefined
+  query.status = undefined
   handleSearch()
 }
 
@@ -431,6 +500,8 @@ function resetForm() {
   form.channel = ''
   form.sort = 0
   form.content = ''
+  form.status = 'published'
+  form.tags = []
   form.sections = [createSection()]
   genPrompt.value = ''
   genSize.value = COVER_SIZES[0]
@@ -475,6 +546,8 @@ async function openEdit(row: AdminNote) {
   form.channel = row.channel
   form.sort = row.sort
   form.content = row.content ?? ''
+  form.status = row.status ?? 'published'
+  form.tags = [...(row.tags ?? [])]
   form.sections = (row.sections ?? []).map(toSectionForm)
   if (!form.sections.length) {
     form.sections = [createSection()]
@@ -643,6 +716,8 @@ function buildPayload(): NotePayload {
     channel: form.channel.trim(),
     sort: form.sort,
     content: form.content,
+    status: form.status,
+    tags: form.tags,
     sections
   }
 }
@@ -693,8 +768,22 @@ async function handleDelete(row: AdminNote) {
   loadList()
 }
 
+/** 审核快捷操作：通过 / 下架 */
+async function changeStatus(row: AdminNote, status: NoteStatus) {
+  await updateNote(row.id, { status })
+  ElMessage.success(status === 'published' ? '已通过审核' : '已下架')
+  loadList()
+}
+
+/** 标签下拉数据：编辑内容时可直接复用已有标签 */
+async function loadTags() {
+  const result = await fetchTags({ page: 1, per_page: 100 })
+  tagOptions.value = result.items
+}
+
 onMounted(() => {
   loadList()
+  loadTags()
 })
 </script>
 

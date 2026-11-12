@@ -126,6 +126,9 @@ export interface NoteSection {
   images?: string[]
 }
 
+/** 内容状态：草稿 / 待审 / 已发布 / 已下架 */
+export type NoteStatus = 'draft' | 'pending' | 'published' | 'archived'
+
 /** 管理后台看到的内容（字段用数据库列名，便于编辑弹窗原样回填） */
 export interface AdminNote {
   id: number
@@ -137,6 +140,9 @@ export interface AdminNote {
   likes_count: number
   channel: string
   sort: number
+  status: NoteStatus
+  /** 标签名列表 */
+  tags?: string[]
   content: string
   sections: NoteSection[]
   created_at: string
@@ -153,6 +159,10 @@ export interface NotePayload {
   sort: number
   content: string
   sections: NoteSection[]
+  /** 标签名列表：已有标签复用，新名字由后端自动创建 */
+  tags?: string[]
+  /** 内容状态，不传时后端按角色给默认值 */
+  status?: NoteStatus
 }
 
 /** 内容列表接口的返回：比通用 PageResult 多一个频道列表 */

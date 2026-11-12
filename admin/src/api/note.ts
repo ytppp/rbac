@@ -6,6 +6,7 @@ export interface NoteQuery {
   per_page?: number
   keyword?: string
   channel?: string
+  status?: string
 }
 
 /** 后台内容列表（走 /api/v1/admin/notes，需要 content:note:list 权限） */
