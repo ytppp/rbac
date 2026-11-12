@@ -2,10 +2,13 @@
 module Api
   module V1
     class BaseController < ActionController::API
+      include RateLimitable
+
       before_action :authenticate_user!
 
       rescue_from AuthError, with: :render_unauthorized
       rescue_from ForbiddenError, with: :render_forbidden
+      rescue_from RateLimitedError, with: :render_too_many_requests
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_record_invalid
       rescue_from ActiveRecord::RecordNotDestroyed, with: :render_record_not_destroyed
@@ -110,6 +113,10 @@ module Api
 
       def render_forbidden(exception)
         render_error(:forbidden, exception.message)
+      end
+
+      def render_too_many_requests(exception)
+        render_error(:too_many_requests, exception.message)
       end
 
       def render_not_found(exception)

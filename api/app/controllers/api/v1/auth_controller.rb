@@ -3,6 +3,9 @@ module Api
   module V1
     class AuthController < BaseController
       skip_before_action :authenticate_user!, only: %i[login register]
+      # 登录 / 注册加限流，避免被撞库或刷注册
+      before_action :throttle_login!, only: :login
+      before_action :throttle_register!, only: :register
 
       # POST /api/v1/auth/login
       def login
@@ -73,6 +76,14 @@ module Api
       end
 
       private
+
+      def throttle_login!
+        throttle!(key: "auth/login", limit: 15, period: 1.minute)
+      end
+
+      def throttle_register!
+        throttle!(key: "auth/register", limit: 5, period: 10.minutes)
+      end
 
       def session_payload(user)
         {

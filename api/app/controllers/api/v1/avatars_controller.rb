@@ -5,27 +5,21 @@ module Api
   module V1
     class AvatarsController < BaseController
       MAX_SIZE = 2.megabytes
-      # 只接受常见图片格式，并据此决定落盘的后缀
-      EXTENSIONS = { "image/png" => "png", "image/jpeg" => "jpg", "image/webp" => "webp" }.freeze
-      UPLOAD_DIR = Rails.root.join("public", "uploads", "avatars")
 
       # POST /api/v1/profile/avatar
       def create
         file = params[:file]
         raise ActionController::ParameterMissing, :file if file.blank?
-
-        extension = EXTENSIONS[file.content_type]
-        return render_error(:unprocessable_entity, "仅支持 PNG / JPEG / WebP 图片") if extension.nil?
         return render_error(:unprocessable_entity, "图片大小不能超过 2MB") if file.size > MAX_SIZE
 
-        FileUtils.mkdir_p(UPLOAD_DIR)
-        # 用随机名落盘，避免同名覆盖和用户可控的文件名
-        filename = "#{SecureRandom.uuid}.#{extension}"
-        File.binwrite(UPLOAD_DIR.join(filename), file.read)
+        # 用文件头判断真实格式，不信任客户端传的 content-type
+        extension = UploadStorage.image_extension(file)
+        return render_error(:unprocessable_entity, "仅支持 PNG / JPEG / WebP 图片") if extension.nil?
 
         # 换成新头像前先把旧文件删掉，避免目录里堆积
         remove_avatar_file
-        current_user.update!(avatar_url: "#{public_origin}/uploads/avatars/#{filename}")
+        url = UploadStorage.store(file, extension: extension, scope: "avatars")
+        current_user.update!(avatar_url: url)
 
         render json: UserSerializer.render(current_user.reload)
       end
@@ -40,16 +34,9 @@ module Api
 
       private
 
-      # 落盘的是「绝对地址」，这样后台（走 Vite 代理）和内容社区（直连 api）都能直接当 img src 用
-      def public_origin
-        ENV.fetch("PUBLIC_API_ORIGIN", "http://localhost:3000")
-      end
-
+      # 本地存储直接删文件；S3 由存储桶生命周期或 CDN 策略清理
       def remove_avatar_file
-        return if current_user.avatar_url.blank?
-
-        path = UPLOAD_DIR.join(File.basename(current_user.avatar_url))
-        File.delete(path) if File.exist?(path)
+        UploadStorage.delete(current_user.avatar_url)
       end
     end
   end

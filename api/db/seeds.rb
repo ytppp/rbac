@@ -94,6 +94,36 @@ PERMISSION_TREE = [
           { name: "编辑内容", code: "content:note:update", type: :button, sort: 3 },
           { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 }
         ]
+      },
+      {
+        # 标签维护：用户在发布内容时可创建标签，管理员在这里改名 / 排序 / 删除
+        name: "标签管理",
+        code: "content:tag",
+        type: :menu,
+        path: "/content/tag",
+        component: "content/tag/index",
+        icon: "PriceTag",
+        sort: 2,
+        children: [
+          { name: "查询标签", code: "content:tag:list", type: :button, sort: 1 },
+          { name: "新增标签", code: "content:tag:create", type: :button, sort: 2 },
+          { name: "编辑标签", code: "content:tag:update", type: :button, sort: 3 },
+          { name: "删除标签", code: "content:tag:delete", type: :button, sort: 4 }
+        ]
+      },
+      {
+        # 举报处理：用户举报内容后进入待处理队列
+        name: "举报管理",
+        code: "content:report",
+        type: :menu,
+        path: "/content/report",
+        component: "content/report/index",
+        icon: "Warning",
+        sort: 3,
+        children: [
+          { name: "查询举报", code: "content:report:list", type: :button, sort: 1 },
+          { name: "处理举报", code: "content:report:handle", type: :button, sort: 2 }
+        ]
       }
     ]
   }

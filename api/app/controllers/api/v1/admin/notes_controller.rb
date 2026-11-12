@@ -9,7 +9,8 @@ module Api
           authorize!("content:note:list")
 
           scope = Note.search(params[:keyword]).in_channel(params[:channel])
-          paginated = paginate(scope.sorted)
+          scope = scope.where(status: params[:status]) if params[:status].present?
+          paginated = paginate(scope.sorted.includes(:tags))
 
           render json: {
             items: NoteSerializer.render_admin_collection(paginated),
@@ -25,14 +26,23 @@ module Api
           # 作者固定为当前登录用户（即持有 content:note:create 权限的这个人）
           note.user = current_user
           note.author_name = current_user.name
+          # 超级管理员可直接发布，其他人在后台新建的内容默认进入待审
+          note.status = params[:status].presence || (current_user.super_admin? ? "published" : "pending")
           note.save!
-          render json: NoteSerializer.render_admin(note), status: :created
+          sync_tags(note, params[:tags])
+          render json: NoteSerializer.render_admin(note.reload), status: :created
         end
 
         def update
           authorize!("content:note:update")
 
+          previous_status = @note.status
           @note.update!(note_params)
+          sync_tags(@note, params[:tags])
+          if params[:status].present?
+            @note.update!(status: params[:status])
+            notify_review(@note, previous_status) if @note.status != previous_status
+          end
           render json: NoteSerializer.render_admin(@note.reload)
         end
 
@@ -47,6 +57,22 @@ module Api
 
         def set_note
           @note = Note.find(params[:id])
+        end
+
+        # 标签按名字提交：已有标签直接复用，新名字自动创建；最多 10 个并去重
+        def sync_tags(note, names)
+          return if names.nil?
+
+          cleaned = Array(names).map { |name| name.to_s.strip }.reject(&:empty?).uniq.first(10)
+          note.tags = cleaned.map { |name| Tag.find_or_create_by!(name: name) }
+        end
+
+        # 审核结果（通过 / 下架）通知作者
+        def notify_review(note, previous_status)
+          return unless %w[published archived].include?(note.status)
+          return if previous_status == note.status
+
+          Notification.push(user_id: note.user_id, action: "review", note_id: note.id)
         end
 
         # 白名单不含 likes_count（后台不能手改点赞数），

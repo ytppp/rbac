@@ -4,9 +4,6 @@ module Api
     module Admin
       class NoteImagesController < Api::V1::BaseController
         MAX_SIZE = 5.megabytes
-        # 与头像上传保持一致的格式白名单，并据此决定落盘后缀
-        EXTENSIONS = { "image/png" => "png", "image/jpeg" => "jpg", "image/webp" => "webp" }.freeze
-        UPLOAD_DIR = Rails.root.join("public", "uploads", "notes")
 
         # POST /api/v1/admin/note_images
         def create
@@ -15,23 +12,13 @@ module Api
 
           file = params[:file]
           raise ActionController::ParameterMissing, :file if file.blank?
-
-          extension = EXTENSIONS[file.content_type]
-          return render_error(:unprocessable_entity, "仅支持 PNG / JPEG / WebP 图片") if extension.nil?
           return render_error(:unprocessable_entity, "图片大小不能超过 5MB") if file.size > MAX_SIZE
 
-          FileUtils.mkdir_p(UPLOAD_DIR)
-          # 随机文件名，避免同名覆盖和用户可控的文件名
-          filename = "#{SecureRandom.uuid}.#{extension}"
-          File.binwrite(UPLOAD_DIR.join(filename), file.read)
+          extension = UploadStorage.image_extension(file)
+          return render_error(:unprocessable_entity, "仅支持 PNG / JPEG / WebP 图片") if extension.nil?
 
-          render json: { url: "#{public_origin}/uploads/notes/#{filename}" }, status: :created
-        end
-
-        private
-
-        def public_origin
-          ENV.fetch("PUBLIC_API_ORIGIN", "http://localhost:3000")
+          url = UploadStorage.store(file, extension: extension, scope: "notes")
+          render json: { url: url }, status: :created
         end
       end
     end
