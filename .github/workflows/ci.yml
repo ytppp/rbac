@@ -62,8 +62,11 @@ jobs:
 
       - run: npm ci
 
+      - name: 生成 ESLint 配置与类型声明
+        run: npx nuxi prepare
+
       - name: ESLint
-        run: npx eslint .
+        run: npm run lint
 
       - name: TypeScript 类型检查
-        run: npx nuxi typecheck
+        run: npm run typecheck
