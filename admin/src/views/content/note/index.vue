@@ -775,8 +775,10 @@ async function changeStatus(row: AdminNote, status: NoteStatus) {
   loadList()
 }
 
-/** 标签下拉数据：编辑内容时可直接复用已有标签 */
+/** 标签下拉数据：编辑内容时可直接复用已有标签；没有标签查询权限时不请求 */
 async function loadTags() {
+  if (!userStore.permissions.includes('content:tag:list')) return
+
   const result = await fetchTags({ page: 1, per_page: 100 })
   tagOptions.value = result.items
 }
