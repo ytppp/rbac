@@ -18,6 +18,14 @@ gem "jwt", "~> 2.8"
 gem "rack-cors", "~> 2.0"
 gem "kaminari", "~> 1.2"
 
+# 结构化日志：lograge 把多行请求日志压成单行，Logstash formatter 输出 JSON
+gem "lograge", require: false
+gem "logstash-event", require: false
+
+# API 文档：Swagger UI + 运行时读取 openapi 文件
+gem "rswag-api"
+gem "rswag-ui"
+
 gem "tzinfo-data", platforms: %i[windows jruby]
 gem "bootsnap", require: false
 
@@ -29,6 +37,7 @@ group :development, :test do
   gem "dotenv-rails"
   gem "rspec-rails", "~> 7.0"
   gem "factory_bot_rails"
+  gem "rswag-specs"
 end
 
 group :development do

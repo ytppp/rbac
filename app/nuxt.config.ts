@@ -28,6 +28,12 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@element-plus/nuxt',
   ],
+  // SSR 缓存：explore 详情页是内容型页面，60 秒内直接复用缓存，过期后台异步重建（SWR）。
+  // 个人收藏状态不参与服务端渲染，由客户端补水后补拉，避免缓存串号。
+  routeRules: {
+    '/explore/**': { swr: 60 },
+    '/en/explore/**': { swr: 60 },
+  },
   // routeRules: {
   //   '/': {
   //     redirect: '/explore',

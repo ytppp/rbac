@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { NoteDetail } from '~/composables/useNotes'
 import { useAuth } from '~/composables/useAuth'
 import { useApiFetch } from '~/composables/useApiFetch'
@@ -240,19 +240,32 @@ const noteId = String(route.params.id)
 const { isLoggedIn, authHeaders } = useAuth()
 const { apiFetch } = useApiFetch()
 
-const { data: note, error: loadError } = await useAsyncData<NoteDetail>(
+const { data: note, error: loadError, refresh } = await useAsyncData<NoteDetail>(
   `note-detail-${noteId}`,
   () =>
     $fetch<NoteDetail>(`/notes/${noteId}`, {
       baseURL: useApiBase(),
-      // 带上 token，详情接口才会返回当前用户的点赞 / 收藏状态
-      headers: authHeaders(),
+      // SSR 的 HTML 会被 routeRules 缓存，因此服务端请求不带 token，
+      // 避免把某个用户的收藏状态缓存给其他访客；客户端补水后再补拉个人状态。
+      headers: import.meta.server ? {} : authHeaders(),
     }),
 )
+
+// 仅在「本次首屏来自 SSR」时为 true，客户端路由跳转不会重复请求
+const needsAuthRefresh = useState(`note-detail-auth-${noteId}`, () => import.meta.server)
 
 // 收藏：状态跟随详情接口返回，点击后立即更新
 const favorited = ref(Boolean(note.value?.favorited))
 const favoriteSubmitting = ref(false)
+
+// SSR 首屏没有个人状态：登录用户在客户端补水后补拉一次，只更新收藏标记
+onMounted(async () => {
+  if (!needsAuthRefresh.value || !isLoggedIn.value) return
+
+  needsAuthRefresh.value = false
+  await refresh()
+  favorited.value = Boolean(note.value?.favorited)
+})
 
 /** SEO：标题 / 摘要 / OG 卡片 / 结构化数据 */
 const description = computed(() =>

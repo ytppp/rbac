@@ -17,4 +17,7 @@ Rails.application.configure do
   config.active_support.disallowed_deprecation_warnings = []
 
   config.active_record.maintain_test_schema = true
+
+  # 测试里不真的往 Redis / Sidekiq 投递任务；用 test adapter 便于断言 enqueued
+  config.active_job.queue_adapter = :test
 end

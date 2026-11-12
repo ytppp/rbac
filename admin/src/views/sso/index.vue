@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { setToken } from '@/utils/auth'
+import { setTokens } from '@/utils/auth'
 
 const router = useRouter()
 const message = ref('正在进入管理后台…')
@@ -20,6 +20,8 @@ onMounted(() => {
   const hash = window.location.hash.replace(/^#/, '')
   const params = new URLSearchParams(hash)
   const token = params.get('token')
+  // app 同时把 refresh token 带过来，过期后才能自动续期
+  const refreshToken = params.get('refresh_token')
   // 支持指定落点（例如 app 的「发布」直接进内容管理）
   const redirect = params.get('redirect')
 
@@ -29,7 +31,7 @@ onMounted(() => {
     return
   }
 
-  setToken(token)
+  setTokens(token, refreshToken || '')
   // 只接受站内绝对路径，避免被构造成外部跳转
   const target = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/dashboard'
   // 整页跳转，让 store 和动态路由都按新 token 重新初始化；同时清掉地址里的 token

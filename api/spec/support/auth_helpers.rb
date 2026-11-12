@@ -1,6 +1,6 @@
 module AuthHelpers
   def auth_headers(user)
-    { "Authorization" => "Bearer #{JsonWebToken.encode(user.id)}" }
+    { "Authorization" => "Bearer #{JsonWebToken.encode_access(user.id)}" }
   end
 
   def json_body

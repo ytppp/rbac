@@ -12,6 +12,14 @@ services:
       - "${DB_PORT_PUBLISHED:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    # 限制数据库容器资源，避免单机环境被一条慢查询拖垮
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-rbac_admin_development}"]
       interval: 5s
@@ -41,6 +49,8 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       REDIS_URL: redis://redis:6379/0
+      # 结构化 JSON 日志（lograge + logstash formatter）
+      LOGRAGE_ENABLED: "true"
     volumes:
       - ./api:/app
     depends_on:
@@ -63,13 +73,17 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-please-change-in-production}
-      JWT_EXPIRE_HOURS: 12
+      # access token 短效，过期后用 refresh token 续期
+      JWT_ACCESS_EXPIRE_HOURS: 2
+      JWT_REFRESH_EXPIRE_DAYS: 7
       # 头像等上传文件对外可访问的地址前缀（存进数据库的绝对 URL 用它拼）
       PUBLIC_API_ORIGIN: ${PUBLIC_API_ORIGIN:-http://localhost:3000}
       # app（3001）与 admin（5173）都是浏览器直连后端，都要放行
       CORS_ORIGINS: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
       # Sidekiq 队列用的 Redis；不传就回退到 :async（进程内执行）
       REDIS_URL: redis://redis:6379/0
+      # 结构化 JSON 日志（lograge + logstash formatter）
+      LOGRAGE_ENABLED: "true"
     ports:
       - "3000:3000"
     volumes:
@@ -80,6 +94,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
 
   admin:

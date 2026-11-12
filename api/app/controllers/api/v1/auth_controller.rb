@@ -2,10 +2,11 @@
 module Api
   module V1
     class AuthController < BaseController
-      skip_before_action :authenticate_user!, only: %i[login register]
+      skip_before_action :authenticate_user!, only: %i[login register refresh]
       # 登录 / 注册加限流，避免被撞库或刷注册
       before_action :throttle_login!, only: :login
       before_action :throttle_register!, only: :register
+      before_action :throttle_refresh!, only: :refresh
 
       # POST /api/v1/auth/login
       def login
@@ -66,6 +67,18 @@ module Api
         render json: { message: "已退出登录" }
       end
 
+      # POST /api/v1/auth/refresh
+      # 用长效 refresh token 换一对新 token（旧的 refresh token 同时失效）
+      def refresh
+        payload = JsonWebToken.decode(params[:refresh_token].to_s, type: JsonWebToken::REFRESH_TYPE)
+        user = User.find_by(id: payload[:user_id])
+
+        return render_error(:unauthorized, "登录已失效，请重新登录") if user.nil?
+        return render_error(:forbidden, "账号已被禁用，请联系管理员") if user.disabled?
+
+        render json: session_payload(user)
+      end
+
       # GET /api/v1/auth/me
       def me
         render json: {
@@ -85,10 +98,16 @@ module Api
         throttle!(key: "auth/register", limit: 5, period: 10.minutes)
       end
 
+      def throttle_refresh!
+        throttle!(key: "auth/refresh", limit: 20, period: 1.minute)
+      end
+
       def session_payload(user)
         {
-          token: JsonWebToken.encode(user.id),
-          expires_in: JsonWebToken.expire_in.to_i,
+          access_token: JsonWebToken.encode_access(user.id),
+          refresh_token: JsonWebToken.encode_refresh(user.id),
+          token_type: "Bearer",
+          expires_in: JsonWebToken.access_expire_in.to_i,
           user: UserSerializer.render(user),
           roles: user.role_codes,
           permissions: user.permission_codes

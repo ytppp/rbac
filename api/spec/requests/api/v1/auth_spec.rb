@@ -4,11 +4,13 @@ RSpec.describe "Api::V1::Auth", type: :request do
   describe "POST /api/v1/auth/login" do
     let!(:user) { create(:user, email: "admin@example.com", password: "Admin@123456") }
 
-    it "邮箱密码正确时返回 token 与权限码" do
+    it "邮箱密码正确时返回 access / refresh token 与权限码" do
       post "/api/v1/auth/login", params: { email: "admin@example.com", password: "Admin@123456" }
 
       expect(response).to have_http_status(:ok)
-      expect(json_body["token"]).to be_present
+      expect(json_body["access_token"]).to be_present
+      expect(json_body["refresh_token"]).to be_present
+      expect(json_body["expires_in"]).to eq(JsonWebToken.access_expire_in.to_i)
       expect(json_body["user"]["email"]).to eq("admin@example.com")
       expect(json_body).to have_key("permissions")
     end

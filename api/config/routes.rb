@@ -1,9 +1,19 @@
 # 路由表：请求地址 -> 控制器方法的映射，全部挂在 /api/v1 前缀下。
 Rails.application.routes.draw do
+  # 容器健康检查：不鉴权，只验证进程与数据库连接
+  get "health", to: "health#show"
+
+  # API 文档：Swagger UI + openapi 描述文件；生产需显式设置 API_DOCS_ENABLED=true
+  if Rails.env.development? || Rails.env.test? || ENV["API_DOCS_ENABLED"] == "true"
+    mount Rswag::Ui::Engine => "/api-docs"
+    mount Rswag::Api::Engine => "/api-docs"
+  end
+
   namespace :api do
     namespace :v1 do
       post   "auth/login",  to: "auth#login"
       post   "auth/register", to: "auth#register"
+      post   "auth/refresh", to: "auth#refresh"
       delete "auth/logout", to: "auth#logout"
       get    "auth/me",     to: "auth#me"
 

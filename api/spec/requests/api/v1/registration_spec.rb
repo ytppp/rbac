@@ -18,7 +18,8 @@ RSpec.describe "注册接口", type: :request do
     post "/api/v1/auth/register", params: payload, as: :json
 
     expect(response).to have_http_status(:created)
-    expect(json_body["token"]).to be_present
+    expect(json_body["access_token"]).to be_present
+    expect(json_body["refresh_token"]).to be_present
     expect(json_body.dig("user", "email")).to eq("newbie@example.com")
   end
 

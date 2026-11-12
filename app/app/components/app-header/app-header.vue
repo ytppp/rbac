@@ -92,7 +92,7 @@ let headroomInstance: Headroom | null = null
 const headerShown = useState('header-shown', () => true)
 
 const { keyword } = useFeed()
-const { user, token, isLoggedIn, fetchMe, logout } = useAuth()
+const { user, token, refreshToken, isLoggedIn, fetchMe, logout } = useAuth()
 const { unread, fetchUnread } = useNotifications()
 const runtimeConfig = useRuntimeConfig()
 const { t } = useI18n()
@@ -131,7 +131,11 @@ function goAdmin(path = '/dashboard') {
   if (!base) return
 
   // token 放在 hash 里，不会进入服务端日志；admin 读取后会立即清掉地址
-  const hash = new URLSearchParams({ token: token.value, redirect: path }).toString()
+  const hash = new URLSearchParams({
+    token: token.value,
+    refresh_token: refreshToken.value ?? '',
+    redirect: path
+  }).toString()
   window.open(`${base}/sso#${hash}`, '_blank', 'noopener')
 }
 
