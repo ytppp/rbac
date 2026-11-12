@@ -42,16 +42,16 @@ module Api
 
           previous_status = @note.status
           # 状态流转（通过 / 下架）属于审核动作，需要单独的审核权限
-          if params[:status].present? && params[:status] != previous_status
-            authorize!("content:note:review")
-          end
+          new_status = params[:status].presence
+          authorize!("content:note:review") if new_status && new_status != previous_status
 
-          @note.update!(note_params)
+          # 合并成一次 update，避免两条 SQL
+          updates = note_params.except(:status)
+          updates[:status] = new_status if new_status
+          @note.update!(updates)
           sync_tags(@note, params[:tags])
-          if params[:status].present?
-            @note.update!(status: params[:status])
-            notify_review(@note, previous_status) if @note.status != previous_status
-          end
+          notify_review(@note, previous_status) if new_status && new_status != previous_status
+
           render json: NoteSerializer.render_admin(@note.reload)
         end
 

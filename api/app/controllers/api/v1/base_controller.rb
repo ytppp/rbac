@@ -1,4 +1,4 @@
-# 所有 V1 接口控制器的父类，集中存放认证、授权、分页与统一错误响应等公共逻辑。
+﻿# 所有 V1 接口控制器的父类，集中存放认证、授权、分页与统一错误响应等公共逻辑。
 module Api
   module V1
     class BaseController < ActionController::API
@@ -125,16 +125,16 @@ module Api
       end
 
       def render_record_invalid(exception)
-        render_error(:unprocessable_entity, "数据校验失败", exception.record.errors.to_hash)
+        render_error(:unprocessable_content, "数据校验失败", exception.record.errors.to_hash)
       end
 
       # 并发下的唯一索引冲突：给前端一个可读的提示，而不是 500
       def render_record_not_unique(_exception)
-        render_error(:unprocessable_entity, "请勿重复提交")
+        render_error(:unprocessable_content, "请勿重复提交")
       end
 
       def render_record_not_destroyed(exception)
-        render_error(:unprocessable_entity, exception.record.errors.full_messages.join("；"))
+        render_error(:unprocessable_content, exception.record.errors.full_messages.join("；"))
       end
 
       def render_parameter_missing(exception)

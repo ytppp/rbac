@@ -1,4 +1,4 @@
-require "rails_helper"
+﻿require "rails_helper"
 
 RSpec.describe "注册接口", type: :request do
   let(:payload) do
@@ -34,18 +34,18 @@ RSpec.describe "注册接口", type: :request do
 
     post "/api/v1/auth/register", params: payload, as: :json
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "两次密码不一致时返回 422" do
     post "/api/v1/auth/register", params: payload.merge(password_confirmation: "mismatch"), as: :json
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "昵称为空时返回 422" do
     post "/api/v1/auth/register", params: payload.merge(name: ""), as: :json
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 end

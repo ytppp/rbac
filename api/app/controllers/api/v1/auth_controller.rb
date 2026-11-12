@@ -1,4 +1,4 @@
-# 认证接口：登录、注册、登出、获取当前用户信息。
+﻿# 认证接口：登录、注册、登出、获取当前用户信息。
 module Api
   module V1
     class AuthController < BaseController
@@ -33,16 +33,16 @@ module Api
         password = attributes[:password].to_s
         confirmation = attributes[:password_confirmation].to_s
 
-        return render_error(:unprocessable_entity, "请填写昵称") if name.blank?
-        return render_error(:unprocessable_entity, "请填写邮箱") if email.blank?
-        return render_error(:unprocessable_entity, "邮箱格式不正确") unless email.match?(URI::MailTo::EMAIL_REGEXP)
-        return render_error(:unprocessable_entity, "昵称最多 50 个字符") if name.length > 50
-        return render_error(:unprocessable_entity, "密码至少 6 位") if password.length < 6
-        return render_error(:unprocessable_entity, "两次输入的密码不一致") if password != confirmation
-        return render_error(:unprocessable_entity, "该邮箱已注册，请直接登录") if User.exists?(email: email)
+        return render_error(:unprocessable_content, "请填写昵称") if name.blank?
+        return render_error(:unprocessable_content, "请填写邮箱") if email.blank?
+        return render_error(:unprocessable_content, "邮箱格式不正确") unless email.match?(URI::MailTo::EMAIL_REGEXP)
+        return render_error(:unprocessable_content, "昵称最多 50 个字符") if name.length > 50
+        return render_error(:unprocessable_content, "密码至少 6 位") if password.length < 6
+        return render_error(:unprocessable_content, "两次输入的密码不一致") if password != confirmation
+        return render_error(:unprocessable_content, "该邮箱已注册，请直接登录") if User.exists?(email: email)
 
         role = Role.find_by(code: Role::REGISTERED_USER_CODE)
-        return render_error(:unprocessable_entity, "注册角色未初始化，请联系管理员") if role.nil?
+        return render_error(:unprocessable_content, "注册角色未初始化，请联系管理员") if role.nil?
 
         user = User.new(name: name, email: email, password: password, password_confirmation: confirmation)
         User.transaction do
@@ -57,7 +57,7 @@ module Api
         render json: session_payload(user), status: :created
       rescue ActiveRecord::RecordNotUnique
         # 并发注册同一邮箱时，数据库唯一索引会兜底
-        render_error(:unprocessable_entity, "该邮箱已注册，请直接登录")
+        render_error(:unprocessable_content, "该邮箱已注册，请直接登录")
       end
 
       # DELETE /api/v1/auth/logout
