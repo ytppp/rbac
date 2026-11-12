@@ -11,6 +11,13 @@ class User < ApplicationRecord
   has_many :roles, through: :user_roles
 
   has_many :note_likes, dependent: :destroy
+  # 评论、评论点赞、内容收藏
+  has_many :comments, dependent: :destroy
+  has_many :comment_likes, dependent: :destroy
+  has_many :note_favorites, dependent: :destroy
+  # 站内通知与举报
+  has_many :notifications, dependent: :destroy
+  has_many :reports, dependent: :destroy
 
   # 该用户创建的内容；删除用户时保留内容，只解除作者关联
   has_many :notes, dependent: :nullify
