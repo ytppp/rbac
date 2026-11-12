@@ -95,7 +95,21 @@
           <h1 class="detail-title">{{ note.title }}</h1>
 
           <div class="detail-meta">
-            <span class="flex items-center gap-6px">
+            <NuxtLink
+              v-if="note.author_id"
+              :to="localePath(`/author/${note.author_id}`)"
+              class="author-link"
+            >
+              <el-avatar
+                :size="20"
+                :src="note.author_avatar || undefined"
+                :style="note.author_avatar ? undefined : { backgroundColor: note.avatar_color }"
+              >
+                {{ note.author.slice(0, 1) }}
+              </el-avatar>
+              <span>{{ note.author }}</span>
+            </NuxtLink>
+            <span v-else class="flex items-center gap-6px">
               <el-avatar
                 :size="20"
                 :src="note.author_avatar || undefined"
@@ -117,6 +131,41 @@
                 {{ $t('detail.tripCount', { count: mapSegments.length }) }}
               </span>
             </template>
+
+            <el-button
+              text
+              size="small"
+              class="report-btn"
+              @click="openReport"
+            >
+              {{ $t('report.action') }}
+            </el-button>
+
+            <el-button
+              round
+              size="small"
+              class="fav-btn"
+              :class="{ 'is-active': favorited }"
+              :loading="favoriteSubmitting"
+              @click="toggleFavorite"
+            >
+              <icon :name="favorited ? 'i-carbon:bookmark-filled' : 'i-carbon:bookmark'" />
+              <span class="ml-1">{{ favorited ? $t('detail.favorited') : $t('detail.favorite') }}</span>
+            </el-button>
+          </div>
+
+          <!-- 标签：点击可查看同标签内容 -->
+          <div v-if="note.tags?.length" class="detail-tags">
+            <el-tag
+              v-for="tagName in note.tags"
+              :key="tagName"
+              round
+              size="small"
+              class="detail-tag"
+              @click="goTag(tagName)"
+            >
+              {{ tagName }}
+            </el-tag>
           </div>
 
           <!-- 目录：每个段标题 + 段内小标题，点击切到对应段 -->
@@ -151,6 +200,9 @@
             </section>
           </article>
           <el-empty v-else :description="$t('detail.noContent')" />
+
+          <!-- 评论区 -->
+          <note-comments :note-id="Number(noteId)" />
         </div>
       </div>
 
@@ -167,14 +219,48 @@
       hide-on-click-modal
       @close="viewer.visible = false"
     />
+
+    <!-- 举报内容 -->
+    <el-dialog v-model="reportVisible" :title="$t('report.title')" width="420px">
+      <el-form label-position="top">
+        <el-form-item :label="$t('report.reason')">
+          <el-select v-model="reportForm.reason" style="width: 100%">
+            <el-option
+              v-for="item in reportReasons"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('report.detail')">
+          <el-input
+            v-model="reportForm.detail"
+            type="textarea"
+            :rows="3"
+            maxlength="500"
+            show-word-limit
+            :placeholder="$t('report.detailPlaceholder')"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reportVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="reportSubmitting" @click="submitReport">
+          {{ $t('report.submit') }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import type { NoteDetail, NoteSection } from '~/composables/useNotes'
 import type { TripSegment, TransportType } from '~/utils/amap/amap-extensions'
 import { renderMarkdown } from '~/utils/markdown'
+import { useAuth } from '~/composables/useAuth'
 
 // 版权信息改到页面底部展示，隐藏布局右侧的固定栏
 definePageMeta({ hideSiteInfo: true })
@@ -182,11 +268,118 @@ definePageMeta({ hideSiteInfo: true })
 const route = useRoute()
 const localePath = useLocalePath()
 const noteId = String(route.params.id)
+const { isLoggedIn, authHeaders } = useAuth()
+const { t } = useI18n()
 
 const { data: note, error: loadError } = await useAsyncData<NoteDetail>(
   `note-detail-${noteId}`,
-  () => $fetch<NoteDetail>(`/notes/${noteId}`, { baseURL: useApiBase() }),
+  () =>
+    $fetch<NoteDetail>(`/notes/${noteId}`, {
+      baseURL: useApiBase(),
+      // 带上 token，详情接口才会返回当前用户的点赞 / 收藏状态
+      headers: authHeaders(),
+    }),
 )
+
+// 收藏：状态跟随详情接口返回，点击后立即更新
+const favorited = ref(Boolean(note.value?.favorited))
+const favoriteSubmitting = ref(false)
+
+/** SEO：标题 / 摘要 / OG 卡片 / 结构化数据 */
+const description = computed(() =>
+  (note.value?.content || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+)
+
+useSeoMeta({
+  title: () => note.value?.title ?? '',
+  description: () => description.value,
+  ogTitle: () => note.value?.title ?? '',
+  ogDescription: () => description.value,
+  ogImage: () => note.value?.cover ?? '',
+  ogType: 'article',
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: () =>
+        JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: note.value?.title ?? '',
+          image: note.value?.cover ? [note.value.cover] : [],
+          author: { '@type': 'Person', name: note.value?.author ?? '' },
+          description: description.value,
+        }),
+    },
+  ],
+})
+
+/** 点标签跳到搜索结果页，按标签浏览 */
+function goTag(tagName: string) {
+  navigateTo(localePath({ path: '/search', query: { tag: tagName } }))
+}
+
+// 举报：登录后可提交，同一内容只能举报一次
+const reportVisible = ref(false)
+const reportSubmitting = ref(false)
+const reportForm = reactive({ reason: 'spam', detail: '' })
+const reportReasons = computed(() =>
+  ['spam', 'ads', 'abuse', 'copyright', 'other'].map((value) => ({
+    value,
+    label: t(`report.reasons.${value}`),
+  })),
+)
+
+function openReport() {
+  if (!isLoggedIn.value) {
+    navigateTo(localePath({ path: '/login', query: { redirect: route.fullPath } }))
+    return
+  }
+  reportVisible.value = true
+}
+
+async function submitReport() {
+  reportSubmitting.value = true
+  try {
+    await $fetch(`/notes/${noteId}/reports`, {
+      baseURL: useApiBase(),
+      method: 'POST',
+      headers: authHeaders(),
+      body: { reason: reportForm.reason, detail: reportForm.detail.trim() },
+    })
+    ElMessage.success(t('report.success'))
+    reportVisible.value = false
+    reportForm.detail = ''
+  } catch (err: any) {
+    ElMessage.error(err?.data?.error || t('report.failed'))
+  } finally {
+    reportSubmitting.value = false
+  }
+}
+
+async function toggleFavorite() {
+  if (!isLoggedIn.value) {
+    await navigateTo(localePath({ path: '/login', query: { redirect: route.fullPath } }))
+    return
+  }
+
+  favoriteSubmitting.value = true
+  try {
+    const result = await $fetch<{ favorited: boolean }>(
+      `/notes/${noteId}/${favorited.value ? 'unfavorite' : 'favorite'}`,
+      {
+        baseURL: useApiBase(),
+        method: favorited.value ? 'DELETE' : 'POST',
+        headers: authHeaders(),
+      },
+    )
+    favorited.value = result.favorited
+  } finally {
+    favoriteSubmitting.value = false
+  }
+}
 
 /** 一段是否属于地图行程：type 非空且起终点齐全 */
 function isTripSection(section: NoteSection): boolean {
@@ -701,6 +894,56 @@ function handleContentClick(event: MouseEvent) {
   margin-bottom: 20px;
   color: var(--c-ink-3);
   font-size: 12px;
+}
+
+/* 作者名可点进作者主页 */
+.author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.author-link:hover {
+  color: var(--el-color-primary);
+}
+
+/* 收藏按钮靠右，已收藏用主色浅底 */
+.fav-btn {
+  margin-left: auto;
+}
+
+.fav-btn.is-active {
+  --el-button-text-color: var(--el-color-primary);
+  --el-button-border-color: var(--el-color-primary-light-5);
+  --el-button-bg-color: var(--el-color-primary-light-9);
+  --el-button-hover-bg-color: var(--el-color-primary-light-8);
+  --el-button-hover-text-color: var(--el-color-primary);
+  --el-button-hover-border-color: var(--el-color-primary-light-5);
+}
+
+/* 标签 chips */
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 16px;
+}
+
+.detail-tag {
+  cursor: pointer;
+}
+
+/* 举报入口：保持低调，悬停变危险色 */
+.report-btn {
+  color: var(--c-ink-3);
+  font-size: 12px;
+}
+
+.report-btn:hover {
+  color: var(--el-color-danger);
 }
 
 .meta-dot {

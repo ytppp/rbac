@@ -19,6 +19,7 @@
               class="search-input"
               :placeholder="$t('header.searchPlaceholder')"
               clearable
+              @keyup.enter="goSearch"
             >
               <template #prefix>
                 <icon name="i-carbon:search" />
@@ -33,15 +34,17 @@
 
             <div class="ml-auto flex flex-none items-center gap-14px">
               <template v-if="isLoggedIn">
-                <el-button class="admin-entry" round @click="goAdmin">
-                  <icon name="i-carbon:dashboard" />
-                  <span class="ml-1 max-md:hidden">{{ $t('header.admin') }}</span>
-                </el-button>
-                <el-button type="primary" round>
+                <el-button type="primary" round @click="goPublish">
                   <icon name="i-carbon:add" />
                   <span class="ml-1">{{ $t('header.publish') }}</span>
                 </el-button>
-                <!-- 已登录：头像 + 昵称，点开下拉可退出 -->
+                <!-- 站内通知：有未读时显示红点 -->
+                <el-badge :value="unread" :hidden="!unread" :max="99" class="notice-badge">
+                  <el-button text class="notice-btn" :title="$t('notification.title')" @click="goNotifications">
+                    <icon name="i-carbon:notification" />
+                  </el-button>
+                </el-badge>
+                <!-- 已登录：头像 + 昵称，点开下拉进个人中心或退出 -->
                 <el-dropdown @command="handleUserCommand">
                   <div class="inline-flex cursor-pointer items-center gap-8px">
                     <el-avatar class="header-avatar" :size="34" :src="user?.avatar_url || undefined" :style="avatarStyle">
@@ -53,7 +56,11 @@
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="logout">
+                      <el-dropdown-item command="profile">
+                        <icon name="i-carbon:user-profile" />
+                        <span class="ml-1">{{ $t('header.profile') }}</span>
+                      </el-dropdown-item>
+                      <el-dropdown-item command="logout" divided>
                         <icon name="i-carbon:logout" />
                         <span class="ml-1">{{ $t('header.logout') }}</span>
                       </el-dropdown-item>
@@ -86,6 +93,7 @@ const headerShown = useState('header-shown', () => true)
 
 const { keyword } = useFeed()
 const { user, token, isLoggedIn, fetchMe, logout } = useAuth()
+const { unread, fetchUnread } = useNotifications()
 const runtimeConfig = useRuntimeConfig()
 const { t } = useI18n()
 
@@ -94,6 +102,14 @@ const localePath = useLocalePath()
 
 /** 登录后跳回当前页面 */
 const loginTo = computed(() => localePath({ path: '/login', query: { redirect: route.fullPath } }))
+
+/** 搜索：回车跳到独立的搜索结果页 */
+function goSearch() {
+  const query = keyword.value.trim()
+  if (!query) return
+
+  navigateTo(localePath({ path: '/search', query: { q: query } }))
+}
 
 /** 头像里的字：取昵称首字，没昵称就取邮箱首字母 */
 const avatarText = computed(() => (user.value?.name || user.value?.email || t('header.me')).slice(0, 1))
@@ -107,24 +123,36 @@ async function goLogin() {
   await navigateTo(loginTo.value)
 }
 
-/** 带 token 跳管理后台：admin 的 /sso 接住 token 后直接进首页 */
-function goAdmin() {
+/** 带 token 在新窗口打开管理后台的指定页面：admin 的 /sso 接住 token 后直接进该页面 */
+function goAdmin(path = '/dashboard') {
   if (!token.value) return
 
   const base = String(runtimeConfig.public.adminBase || '').replace(/\/+$/, '')
   if (!base) return
 
   // token 放在 hash 里，不会进入服务端日志；admin 读取后会立即清掉地址
-  window.location.href = `${base}/sso#token=${encodeURIComponent(token.value)}`
+  const hash = new URLSearchParams({ token: token.value, redirect: path }).toString()
+  window.open(`${base}/sso#${hash}`, '_blank', 'noopener')
+}
+
+/** 「发布」直接进入 admin 的内容管理 */
+function goPublish() {
+  goAdmin('/content/note')
+}
+
+function goNotifications() {
+  navigateTo(localePath('/notifications'))
 }
 
 function handleUserCommand(command: string) {
   if (command === 'logout') logout()
+  if (command === 'profile') navigateTo(localePath('/profile'))
 }
 
 // 刷新页面后 cookie 里还有 token，但内存里没有用户信息，这里补拉一次
 onMounted(() => {
   if (token.value && !user.value) fetchMe()
+  if (token.value) fetchUnread()
   if (!headerRef.value) return
   headroomInstance = new Headroom(headerRef.value, {
     // 触发距离（像素）
@@ -252,16 +280,16 @@ onMounted(() => {
   @apply text-13px;
 }
 
-/* 管理后台入口：低调的描边按钮，避免抢「发布」的主按钮 */
-.admin-entry {
-  border-color: var(--c-line);
-  background: var(--c-card);
+/* 通知铃铛：图标按钮，未读数由 el-badge 显示 */
+.notice-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
   color: var(--c-ink-2);
+  font-size: 18px;
 }
 
-.admin-entry:hover {
-  border-color: var(--el-color-primary-light-5);
-  background: var(--el-color-primary-light-9);
+.notice-btn:hover {
   color: var(--el-color-primary);
 }
 </style>

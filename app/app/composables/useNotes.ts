@@ -8,13 +8,19 @@ export interface Note {
   /** 封面宽高比（宽 / 高），图片加载前用它占位，避免瀑布流抖动 */
   cover_ratio: number
   author: string
+  /** 作者关联的用户 id；历史数据可能为空，为空时不支持跳作者主页 */
+  author_id?: number | null
   /** 作者头像地址；无头像时为 null，前端回退到「首字 + 底色」 */
   author_avatar: string | null
   avatar_color: string
   likes: number
   channel: string
+  /** 标签名列表 */
+  tags?: string[]
   /** 当前登录用户是否已点赞（未登录恒为 false） */
   liked: boolean
+  /** 当前登录用户是否已收藏 */
+  favorited?: boolean
 }
 
 /** 行程段上的点位（与高德坐标一致：经度 lng、纬度 lat） */

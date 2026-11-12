@@ -9,6 +9,7 @@
     "publish": "发布",
     "login": "登录",
     "logout": "退出登录",
+    "profile": "个人中心",
     "me": "我"
   },
   "home": {
@@ -28,6 +29,66 @@
     "eyebrow": "DESTINATIONS",
     "title": "旅行频道"
   },
+  "common": {
+    "loadMore": "加载更多",
+    "loading": "加载中…",
+    "cancel": "取消"
+  },
+  "notification": {
+    "title": "通知",
+    "someone": "有人",
+    "comment": "{name} 评论了你的内容「{title}」",
+    "like": "{name} 赞了你的内容「{title}」",
+    "review": "你的内容「{title}」审核状态已更新",
+    "markAllRead": "全部已读",
+    "empty": "暂时没有通知"
+  },
+  "report": {
+    "action": "举报",
+    "title": "举报内容",
+    "reason": "举报原因",
+    "detail": "补充说明",
+    "detailPlaceholder": "可选：描述具体问题",
+    "submit": "提交举报",
+    "success": "举报已提交，我们会尽快处理",
+    "failed": "举报失败，请稍后重试",
+    "reasons": {
+      "spam": "垃圾信息",
+      "ads": "广告营销",
+      "abuse": "辱骂或攻击",
+      "copyright": "侵权内容",
+      "other": "其他"
+    }
+  },
+  "search": {
+    "title": "搜索结果",
+    "resultFor": "与「{q}」相关的内容",
+    "taggedWith": "标签「{tag}」下的内容",
+    "empty": "没有找到相关内容，换个关键词试试"
+  },
+  "comment": {
+    "title": "评论",
+    "sortHot": "最热",
+    "sortTime": "最新",
+    "placeholder": "发一条友善的评论吧",
+    "loginPlaceholder": "登录后参与评论",
+    "submit": "发布",
+    "reply": "回复",
+    "replyPlaceholder": "回复 {'@'}{name}",
+    "cancel": "取消",
+    "delete": "删除",
+    "deleteConfirm": "确定删除这条评论吗？",
+    "more": "查看更多评论",
+    "empty": "还没有评论，来抢沙发吧",
+    "floor": "{count}楼",
+    "failed": "操作失败，请稍后重试"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{count} 分钟前",
+    "hoursAgo": "{count} 小时前",
+    "daysAgo": "{count} 天前"
+  },
   "gallery": {
     "alt": "图片",
     "altIndex": "{alt} 第 {index} 张"
@@ -45,7 +106,9 @@
     "noPhotos": "本段暂无图片",
     "noPhotosOther": "本段暂无图片，其他段共 {count} 张",
     "toc": "行程目录",
-    "noContent": "暂无正文内容"
+    "noContent": "暂无正文内容",
+    "favorite": "收藏",
+    "favorited": "已收藏"
   },
   "map": {
     "notice": "注意",
@@ -118,6 +181,19 @@
     "nameRequired": "请输入昵称",
     "confirmRequired": "请再次输入密码",
     "confirmMismatch": "两次输入的密码不一致"
+  },
+  "profile": {
+    "notes": "我的发布",
+    "favorites": "我的收藏",
+    "likes": "我的点赞",
+    "emptyNotes": "还没有发布过内容",
+    "emptyFavorites": "还没有收藏任何内容",
+    "emptyLikes": "还没有点赞过内容"
+  },
+  "author": {
+    "notesCount": "共 {count} 篇内容",
+    "empty": "这位作者还没有发布内容",
+    "notFound": "作者不存在或已被删除"
   },
   "meta": {
     "title": "发现 · 旅行手记",

@@ -599,7 +599,7 @@ export default class AMapUtils {
           zIndex: 100,
         })
         routePolyline.on('click', focusSegment)
-        this.map.add(routePolyline)
+        this.map?.add(routePolyline)
         this.tripOverlays.push(routePolyline)
       }
 
@@ -616,7 +616,7 @@ export default class AMapUtils {
         zIndex: 105,
       })
       linePolyline.on('click', focusSegment)
-      this.map.add(linePolyline)
+      this.map?.add(linePolyline)
       this.tripOverlays.push(linePolyline)
 
       // 交通工具图标放在两点连线中点
@@ -630,7 +630,7 @@ export default class AMapUtils {
         cursor: 'default',
         zIndex: 160,
       })
-      this.map.add(iconMarker)
+      this.map?.add(iconMarker)
       this.tripOverlays.push(iconMarker)
 
       // 耗时小标签贴在图标右侧
@@ -643,7 +643,7 @@ export default class AMapUtils {
           content: this.createTimeLabel(segment.type, label),
           zIndex: 160,
         })
-        this.map.add(labelMarker)
+        this.map?.add(labelMarker)
         this.tripOverlays.push(labelMarker)
       }
 
@@ -667,7 +667,7 @@ export default class AMapUtils {
           content: pointContent(type),
           zIndex: 150,
         })
-        this.map!.add(marker)
+        this.map?.add(marker)
         this.tripOverlays.push(marker)
       })
     }

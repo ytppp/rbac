@@ -9,6 +9,7 @@
     "publish": "Publish",
     "login": "Log in",
     "logout": "Log out",
+    "profile": "Profile",
     "me": "Me"
   },
   "home": {
@@ -28,6 +29,66 @@
     "eyebrow": "DESTINATIONS",
     "title": "Travel channels"
   },
+  "common": {
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "cancel": "Cancel"
+  },
+  "notification": {
+    "title": "Notifications",
+    "someone": "Someone",
+    "comment": "{name} commented on your post {title}",
+    "like": "{name} liked your post {title}",
+    "review": "Your post {title} has a new review result",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet"
+  },
+  "report": {
+    "action": "Report",
+    "title": "Report content",
+    "reason": "Reason",
+    "detail": "Details",
+    "detailPlaceholder": "Optional: describe the problem",
+    "submit": "Submit report",
+    "success": "Report submitted. We will review it soon.",
+    "failed": "Failed to submit. Please try again.",
+    "reasons": {
+      "spam": "Spam",
+      "ads": "Advertising",
+      "abuse": "Abuse or harassment",
+      "copyright": "Copyright infringement",
+      "other": "Other"
+    }
+  },
+  "search": {
+    "title": "Search results",
+    "resultFor": "Content related to {q}",
+    "taggedWith": "Content tagged {tag}",
+    "empty": "Nothing found. Try another keyword."
+  },
+  "comment": {
+    "title": "Comments",
+    "sortHot": "Top",
+    "sortTime": "Newest",
+    "placeholder": "Leave a friendly comment",
+    "loginPlaceholder": "Log in to join the discussion",
+    "submit": "Post",
+    "reply": "Reply",
+    "replyPlaceholder": "Reply to {'@'}{name}",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this comment?",
+    "more": "Load more comments",
+    "empty": "No comments yet. Be the first one!",
+    "floor": "#{count}",
+    "failed": "Something went wrong. Please try again."
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{count} min ago",
+    "hoursAgo": "{count} hr ago",
+    "daysAgo": "{count} d ago"
+  },
   "gallery": {
     "alt": "Photo",
     "altIndex": "{alt} {index}"
@@ -45,7 +106,9 @@
     "noPhotos": "No photos in this leg",
     "noPhotosOther": "No photos in this leg, {count} in other legs",
     "toc": "Trip contents",
-    "noContent": "No content yet"
+    "noContent": "No content yet",
+    "favorite": "Save",
+    "favorited": "Saved"
   },
   "map": {
     "notice": "Notice",
@@ -118,6 +181,19 @@
     "nameRequired": "Please enter a nickname",
     "confirmRequired": "Please enter the password again",
     "confirmMismatch": "The two passwords do not match"
+  },
+  "profile": {
+    "notes": "My posts",
+    "favorites": "Saved",
+    "likes": "Liked",
+    "emptyNotes": "You have not posted anything yet",
+    "emptyFavorites": "You have not saved anything yet",
+    "emptyLikes": "You have not liked anything yet"
+  },
+  "author": {
+    "notesCount": "{count} posts",
+    "empty": "This author has not posted anything yet",
+    "notFound": "Author not found or has been deleted"
   },
   "meta": {
     "title": "Discover · Travel Notes",
