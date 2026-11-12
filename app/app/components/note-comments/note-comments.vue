@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { useAuth } from '~/composables/useAuth'
 import { useApiFetch } from '~/composables/useApiFetch'
 
