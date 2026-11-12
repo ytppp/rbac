@@ -26,4 +26,37 @@ RSpec.describe "接口级权限校验", type: :request do
 
     expect(response).to have_http_status(:ok)
   end
+
+  describe "内容审核权限" do
+    let(:editor) { create(:user, role_codes: []) }
+    let(:reviewer) { create(:user, role_codes: []) }
+    let(:note) { create(:note, status: :pending) }
+
+    before do
+      editor.roles << create(:role, code: "content_editor", permission_codes: %w[content:note:update])
+      reviewer.roles << create(:role, code: "content_reviewer", permission_codes: %w[content:note:update content:note:review])
+    end
+
+    it "没有 content:note:review 时不能修改状态" do
+      patch "/api/v1/admin/notes/#{note.id}",
+            params: { status: "published" },
+            headers: auth_headers(editor),
+            as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(note.reload.status).to eq("pending")
+    end
+
+    it "有 content:note:review 时可以下架内容" do
+      note.update!(status: :published)
+
+      patch "/api/v1/admin/notes/#{note.id}",
+            params: { status: "archived" },
+            headers: auth_headers(reviewer),
+            as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(note.reload.status).to eq("archived")
+    end
+  end
 end

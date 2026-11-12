@@ -92,7 +92,9 @@ PERMISSION_TREE = [
           { name: "查询内容", code: "content:note:list", type: :button, sort: 1 },
           { name: "新增内容", code: "content:note:create", type: :button, sort: 2 },
           { name: "编辑内容", code: "content:note:update", type: :button, sort: 3 },
-          { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 }
+          { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 },
+          # 审核动作单独授权：只有管理员能把内容通过审核或下架
+          { name: "审核内容", code: "content:note:review", type: :button, sort: 5 }
         ]
       },
       {

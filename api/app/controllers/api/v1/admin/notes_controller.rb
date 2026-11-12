@@ -26,8 +26,12 @@ module Api
           # 作者固定为当前登录用户（即持有 content:note:create 权限的这个人）
           note.user = current_user
           note.author_name = current_user.name
-          # 超级管理员可直接发布，其他人在后台新建的内容默认进入待审
-          note.status = params[:status].presence || (current_user.super_admin? ? "published" : "pending")
+          # 只有具备审核权限的人才能直接指定状态；其他人新建的内容一律进入待审
+          note.status = if can_review?
+            params[:status].presence || "published"
+          else
+            "pending"
+          end
           note.save!
           sync_tags(note, params[:tags])
           render json: NoteSerializer.render_admin(note.reload), status: :created
@@ -37,6 +41,11 @@ module Api
           authorize!("content:note:update")
 
           previous_status = @note.status
+          # 状态流转（通过 / 下架）属于审核动作，需要单独的审核权限
+          if params[:status].present? && params[:status] != previous_status
+            authorize!("content:note:review")
+          end
+
           @note.update!(note_params)
           sync_tags(@note, params[:tags])
           if params[:status].present?
@@ -73,6 +82,11 @@ module Api
           return if previous_status == note.status
 
           Notification.push(user_id: note.user_id, action: "review", note_id: note.id)
+        end
+
+        # 是否具备内容审核权限（超级管理员默认具备）
+        def can_review?
+          current_user.super_admin? || current_user.permission_codes.include?("content:note:review")
         end
 
         # 白名单不含 likes_count（后台不能手改点赞数），

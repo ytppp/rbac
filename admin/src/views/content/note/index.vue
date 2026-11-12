@@ -59,10 +59,10 @@
         </el-table-column>
         <el-table-column label="操作" width="230" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 'pending'" v-perm="'content:note:update'" link type="success" @click="changeStatus(row, 'published')">
+            <el-button v-if="row.status === 'pending'" v-perm="'content:note:review'" link type="success" @click="changeStatus(row, 'published')">
               通过
             </el-button>
-            <el-button v-else-if="row.status === 'published'" v-perm="'content:note:update'" link type="warning" @click="changeStatus(row, 'archived')">
+            <el-button v-else-if="row.status === 'published'" v-perm="'content:note:review'" link type="warning" @click="changeStatus(row, 'archived')">
               下架
             </el-button>
             <el-button v-perm="'content:note:update'" link type="primary" @click="openEdit(row)">
@@ -115,10 +115,12 @@
         </el-form-item>
 
         <el-form-item label="状态">
-          <el-select v-model="form.status" style="width: 200px">
+          <el-select v-model="form.status" style="width: 200px" :disabled="!canReview">
             <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
-          <span class="hint block">待审内容需要先通过审核，才会出现在内容社区</span>
+          <span class="hint block">
+            {{ canReview ? '待审内容需要先通过审核，才会出现在内容社区' : '审核状态由管理员维护，保存后保持当前状态' }}
+          </span>
         </el-form-item>
 
         <el-form-item label="标签">
@@ -333,6 +335,8 @@ import type {
 } from '@/types'
 
 const userStore = useUserStore()
+// 审核权限：只有管理员能把内容通过审核 / 下架
+const canReview = computed(() => userStore.permissions.includes('content:note:review'))
 const currentUserName = computed(() => userStore.displayName)
 // 当前登录用户是否已有头像：有的话「头像颜色」这个兜底字段就用不上
 const hasOwnAvatar = computed(() => Boolean(userStore.userInfo?.avatar_url))
@@ -716,7 +720,8 @@ function buildPayload(): NotePayload {
     channel: form.channel.trim(),
     sort: form.sort,
     content: form.content,
-    status: form.status,
+    // 没有审核权限的人不提交状态，避免覆盖管理员设置的审核状态
+    status: canReview.value ? form.status : undefined,
     tags: form.tags,
     sections
   }
