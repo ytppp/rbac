@@ -1,4 +1,4 @@
-# 内容评论：顶层评论 parent 为空，回复指向同一条内容下的顶层评论。
+﻿# 内容评论：顶层评论 parent 为空，回复指向同一条内容下的顶层评论。
 class Comment < ApplicationRecord
   belongs_to :note
   belongs_to :user
@@ -23,7 +23,10 @@ class Comment < ApplicationRecord
   private
 
   def notify_note_author
-    Notification.push(user_id: note&.user_id, actor_id: user_id, action: "comment", note_id: note_id, comment_id: id)
+    NotificationJob.perform_later(
+      user_id: note&.user_id, actor_id: user_id, action: "comment",
+      note_id: note_id, comment_id: id
+    )
   end
 
   def parent_must_be_root_of_same_note

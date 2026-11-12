@@ -1,4 +1,4 @@
-# 点赞记录模型，对应 note_likes 表。
+﻿# 点赞记录模型，对应 note_likes 表。
 class NoteLike < ApplicationRecord
   # counter_cache 自动维护 note.likes_count 的增减
   belongs_to :note, counter_cache: :likes_count
@@ -10,6 +10,8 @@ class NoteLike < ApplicationRecord
   private
 
   def notify_note_author
-    Notification.push(user_id: note&.user_id, actor_id: user_id, action: "like", note_id: note_id)
+    NotificationJob.perform_later(
+      user_id: note&.user_id, actor_id: user_id, action: "like", note_id: note_id
+    )
   end
 end

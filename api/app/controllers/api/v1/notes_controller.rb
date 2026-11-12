@@ -9,6 +9,8 @@ module Api
       before_action :optional_authenticate_user!, only: %i[index show]
 
       before_action :set_note, only: %i[show like unlike favorite unfavorite]
+      # HTTP 缓存：公开只读接口，未登录时加 ETag + Cache-Control
+      before_action :set_cache_headers, only: %i[index show]
 
       def index
         # includes 预加载作者与标签，避免序列化时逐条查库
@@ -44,6 +46,12 @@ module Api
       # GET /api/v1/notes/:id
       # 详情页：正文 Markdown + 分段行程（每段含图片）
       def show
+        # ETag：未登录时基于 note.updated_at，命中返回 304
+        unless current_user
+          fresh_when etag: @note
+          return if performed?
+        end
+
         liked = current_user ? NoteLike.exists?(user_id: current_user.id, note_id: @note.id) : false
         favorited = current_user ? NoteFavorite.exists?(user_id: current_user.id, note_id: @note.id) : false
         render json: NoteSerializer.render_detail(@note, liked: liked, favorited: favorited)
@@ -83,6 +91,12 @@ module Api
       def set_note
         # app 端只能访问已发布内容
         @note = Note.published.find(params[:id])
+      end
+
+      # 未登录的公开请求可以被浏览器 / CDN / 代理缓存 60 秒；
+      # 登录用户看到的是个性化内容（带 liked/favorited），标记 private 不共享。
+      def set_cache_headers
+        response.headers['Cache-Control'] = current_user ? 'private, no-store' : 'public, max-age=60'
       end
     end
   end

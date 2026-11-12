@@ -228,6 +228,7 @@
 import { computed, ref } from 'vue'
 import type { NoteDetail } from '~/composables/useNotes'
 import { useAuth } from '~/composables/useAuth'
+import { useApiFetch } from '~/composables/useApiFetch'
 import { useNoteSections } from '~/composables/useNoteSections'
 
 // 版权信息改到页面底部展示，隐藏布局右侧的固定栏
@@ -237,6 +238,7 @@ const route = useRoute()
 const localePath = useLocalePath()
 const noteId = String(route.params.id)
 const { isLoggedIn, authHeaders } = useAuth()
+const { apiFetch } = useApiFetch()
 
 const { data: note, error: loadError } = await useAsyncData<NoteDetail>(
   `note-detail-${noteId}`,
@@ -316,13 +318,9 @@ async function toggleFavorite() {
 
   favoriteSubmitting.value = true
   try {
-    const result = await $fetch<{ favorited: boolean }>(
+    const result = await apiFetch<{ favorited: boolean }>(
       `/notes/${noteId}/${favorited.value ? 'unfavorite' : 'favorite'}`,
-      {
-        baseURL: useApiBase(),
-        method: favorited.value ? 'DELETE' : 'POST',
-        headers: authHeaders(),
-      },
+      { method: favorited.value ? 'DELETE' : 'POST', silent: true },
     )
     favorited.value = result.favorited
   } finally {

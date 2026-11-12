@@ -1,4 +1,4 @@
-# 管理后台的内容管理接口（增删改查），放在 admin 命名空间下以区别于前台公开接口。
+﻿# 管理后台的内容管理接口（增删改查），放在 admin 命名空间下以区别于前台公开接口。
 module Api
   module V1
     module Admin
@@ -81,7 +81,7 @@ module Api
           return unless %w[published archived].include?(note.status)
           return if previous_status == note.status
 
-          Notification.push(user_id: note.user_id, action: "review", note_id: note.id)
+          NotificationJob.perform_later(user_id: note.user_id, action: "review", note_id: note.id)
         end
 
         # 是否具备内容审核权限（超级管理员默认具备）

@@ -18,6 +18,38 @@ services:
       timeout: 5s
       retries: 12
 
+  # Sidekiq / Redis — 异步队列，评论/点赞/审核触发的通知走这里，不再阻塞 API 响应
+  redis:
+    image: redis:7-alpine
+    container_name: rbac-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--save", "60 1000", "--appendonly", "yes"]
+
+  sidekiq:
+    build:
+      context: ./api
+    container_name: rbac-sidekiq
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./api:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["bundle", "exec", "sidekiq", "-q", "default:5"]
+
   api:
     build:
       context: ./api
@@ -36,6 +68,8 @@ services:
       PUBLIC_API_ORIGIN: ${PUBLIC_API_ORIGIN:-http://localhost:3000}
       # app（3001）与 admin（5173）都是浏览器直连后端，都要放行
       CORS_ORIGINS: http://localhost:5173,http://localhost:3001,http://127.0.0.1:5173,http://127.0.0.1:3001
+      # Sidekiq 队列用的 Redis；不传就回退到 :async（进程内执行）
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "3000:3000"
     volumes:
@@ -44,6 +78,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
 
   admin:
@@ -88,5 +124,6 @@ services:
 
 volumes:
   db_data:
+  redis_data:
   admin_node_modules:
   app_node_modules:

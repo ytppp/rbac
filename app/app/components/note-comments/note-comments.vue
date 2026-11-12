@@ -149,6 +149,7 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuth } from '~/composables/useAuth'
+import { useApiFetch } from '~/composables/useApiFetch'
 
 interface CommentAuthor {
   id: number
@@ -170,7 +171,8 @@ interface CommentItem {
 const props = defineProps<{ noteId: number }>()
 const emit = defineEmits<{ report: [comment: CommentItem] }>()
 
-const { isLoggedIn, user, authHeaders } = useAuth()
+const { isLoggedIn, user } = useAuth()
+const { apiFetch } = useApiFetch()
 const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
@@ -210,13 +212,11 @@ function handleFocus() {
 async function loadComments(pageNo = 1) {
   loading.value = true
   try {
-    const result = await $fetch<{
+    const result = await apiFetch<{
       items: CommentItem[]
       meta: { page: number, total_pages: number }
       total: number
     }>(`/notes/${props.noteId}/comments`, {
-      baseURL: useApiBase(),
-      headers: authHeaders(),
       query: { page: pageNo, sort: sort.value },
     })
 
@@ -240,10 +240,8 @@ async function submitComment(parent?: CommentItem) {
 
   submitting.value = true
   try {
-    const created = await $fetch<CommentItem>(`/notes/${props.noteId}/comments`, {
-      baseURL: useApiBase(),
+    const created = await apiFetch<CommentItem>(`/notes/${props.noteId}/comments`, {
       method: 'POST',
-      headers: authHeaders(),
       body: { content, parent_id: parent?.id },
     })
 
@@ -257,8 +255,8 @@ async function submitComment(parent?: CommentItem) {
       draft.value = ''
     }
     total.value += 1
-  } catch (err: any) {
-    ElMessage.error(err?.data?.error || t('comment.failed'))
+  } catch {
+    // 错误提示已由 useApiFetch 统一处理
   } finally {
     submitting.value = false
   }
@@ -280,18 +278,17 @@ async function toggleLike(comment: CommentItem) {
 
   const unliking = comment.liked
   try {
-    const result = await $fetch<{ liked: boolean, likes: number }>(
+    const result = await apiFetch<{ liked: boolean, likes: number }>(
       `/comments/${comment.id}/${unliking ? 'unlike' : 'like'}`,
       {
-        baseURL: useApiBase(),
         method: unliking ? 'DELETE' : 'POST',
-        headers: authHeaders(),
+        silent: true,
       },
     )
     comment.liked = result.liked
     comment.likes = result.likes
   } catch {
-    // 失败保持原状态，下次刷新会同步
+    // silent:true — 失败保持原状态，下次刷新会同步
   }
 }
 
@@ -307,18 +304,14 @@ async function removeComment(comment: CommentItem) {
   }
 
   try {
-    await $fetch(`/comments/${comment.id}`, {
-      baseURL: useApiBase(),
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
+    await apiFetch(`/comments/${comment.id}`, { method: 'DELETE' })
 
     comments.value = comments.value
       .filter((item) => item.id !== comment.id)
       .map((item) => ({ ...item, replies: item.replies.filter((reply) => reply.id !== comment.id) }))
     total.value = Math.max(0, total.value - 1)
-  } catch (err: any) {
-    ElMessage.error(err?.data?.error || t('comment.failed'))
+  } catch {
+    // 错误提示已由 useApiFetch 统一处理
   }
 }
 

@@ -1,4 +1,4 @@
-module Api
+﻿module Api
   module V1
     module Admin
       # 举报处理：查看待处理举报，标记已处理 / 已忽略，可直接下架内容
@@ -35,7 +35,7 @@ module Api
           # 处理时可以直接把内容下架，并通知作者
           if params[:archive_note].to_s == "true" && report.note
             report.note.update!(status: :archived)
-            Notification.push(user_id: report.note.user_id, action: "review", note_id: report.note.id)
+            NotificationJob.perform_later(user_id: report.note.user_id, action: "review", note_id: report.note.id)
           end
 
           render json: report_json(report.reload)

@@ -27,6 +27,10 @@ module RbacAdmin
     config.time_zone = "Beijing"
     config.active_record.default_timezone = :utc
 
+    # Sidekiq 异步队列：评论 / 点赞 / 审核触发的通知走 Redis 异步处理，
+    # 不再阻塞 API 响应；开发环境没 Redis 时回退到 :async（进程内执行）。
+    config.active_job.queue_adapter = ENV["REDIS_URL"].present? ? :sidekiq : :async
+
     # 生成器配置：以后用 rails generate 生成代码时的默认选项
     config.generators do |g|
       # 默认用 rspec 写测试，并且不生成 fixture / view spec / routing spec

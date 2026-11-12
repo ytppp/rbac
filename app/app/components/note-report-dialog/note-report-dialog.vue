@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useAuth } from '~/composables/useAuth'
+import { useApiFetch } from '~/composables/useApiFetch'
 
 interface ReportTarget {
   type: 'note' | 'comment'
@@ -52,7 +52,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { authHeaders } = useAuth()
+const { apiFetch } = useApiFetch()
 
 const submitting = ref(false)
 const form = reactive({ reason: 'spam', detail: '' })
@@ -84,17 +84,15 @@ async function submit() {
       ? `/notes/${props.target.id}/reports`
       : `/comments/${props.target.id}/reports`
 
-    await $fetch(path, {
-      baseURL: useApiBase(),
+    await apiFetch(path, {
       method: 'POST',
-      headers: authHeaders(),
       body: { reason: form.reason, detail: form.detail.trim() },
     })
     ElMessage.success(t('report.success'))
     visible.value = false
     emit('success')
-  } catch (err: any) {
-    ElMessage.error(err?.data?.error || t('report.failed'))
+  } catch {
+    // 错误提示已由 useApiFetch 统一处理
   } finally {
     submitting.value = false
   }
