@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_12_000007) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_12_000009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -120,7 +120,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_000007) do
   end
 
   create_table "reports", force: :cascade do |t|
-    t.bigint "note_id", null: false
+    t.bigint "note_id"
     t.bigint "user_id", null: false
     t.string "reason", null: false
     t.text "detail"
@@ -129,7 +129,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_000007) do
     t.datetime "handled_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["note_id", "user_id"], name: "index_reports_on_note_id_and_user_id", unique: true
+    t.bigint "comment_id"
+    t.index ["comment_id", "user_id"], name: "index_reports_on_comment_id_and_user_id", unique: true
+    t.index ["comment_id"], name: "index_reports_on_comment_id"
+    t.index ["note_id", "user_id"], name: "index_reports_on_note_only", unique: true, where: "(comment_id IS NULL)"
     t.index ["note_id"], name: "index_reports_on_note_id"
     t.index ["status"], name: "index_reports_on_status"
     t.index ["user_id"], name: "index_reports_on_user_id"
@@ -205,6 +208,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_000007) do
   add_foreign_key "notifications", "users", column: "actor_id", on_delete: :nullify
   add_foreign_key "notifications", "users", on_delete: :cascade
   add_foreign_key "permissions", "permissions", column: "parent_id", on_delete: :restrict
+  add_foreign_key "reports", "comments", on_delete: :cascade
   add_foreign_key "reports", "notes", on_delete: :cascade
   add_foreign_key "reports", "users", column: "handled_by", on_delete: :nullify
   add_foreign_key "reports", "users", on_delete: :cascade

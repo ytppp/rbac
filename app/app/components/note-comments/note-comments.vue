@@ -67,6 +67,10 @@
               <icon name="i-carbon:trash-can" />
               <span>{{ $t('comment.delete') }}</span>
             </button>
+            <button v-else type="button" class="action" @click="emit('report', comment)">
+              <icon name="i-carbon:warning-alt" />
+              <span>{{ $t('comment.report') }}</span>
+            </button>
           </div>
 
           <!-- 回复输入：挂在被回复的顶层评论下 -->
@@ -120,6 +124,10 @@
                     <icon name="i-carbon:trash-can" />
                     <span>{{ $t('comment.delete') }}</span>
                   </button>
+                  <button v-else type="button" class="action" @click="emit('report', reply)">
+                    <icon name="i-carbon:warning-alt" />
+                    <span>{{ $t('comment.report') }}</span>
+                  </button>
                 </div>
               </div>
             </li>
@@ -160,6 +168,7 @@ interface CommentItem {
 }
 
 const props = defineProps<{ noteId: number }>()
+const emit = defineEmits<{ report: [comment: CommentItem] }>()
 
 const { isLoggedIn, user, authHeaders } = useAuth()
 const { t } = useI18n()

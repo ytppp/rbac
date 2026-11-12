@@ -13,10 +13,16 @@
 
       <el-table v-loading="loading" :data="list" border stripe>
         <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column label="内容" min-width="220">
+        <el-table-column label="举报对象" min-width="240">
           <template #default="{ row }">
-            <p class="m-0 font-600">{{ row.note.title }}</p>
-            <span class="muted">内容状态：{{ noteStatusText(row.note.status) }}</span>
+            <template v-if="row.comment">
+              <p class="m-0 font-600">评论：{{ row.comment.content }}</p>
+              <span class="muted">来自《{{ row.comment.note_title }}》</span>
+            </template>
+            <template v-else-if="row.note">
+              <p class="m-0 font-600">{{ row.note.title }}</p>
+              <span class="muted">内容状态：{{ noteStatusText(row.note.status) }}</span>
+            </template>
           </template>
         </el-table-column>
         <el-table-column label="举报原因" width="120">
@@ -39,10 +45,25 @@
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <template v-if="row.status === 'pending'">
-              <el-button v-perm="'content:report:handle'" link type="danger" @click="handle(row, 'resolved', true)">
+              <el-button
+                v-if="row.comment"
+                v-perm="'content:report:handle'"
+                link
+                type="danger"
+                @click="handle(row, 'resolved', 'comment')"
+              >
+                删除评论
+              </el-button>
+              <el-button
+                v-else-if="row.note"
+                v-perm="'content:report:handle'"
+                link
+                type="danger"
+                @click="handle(row, 'resolved', 'note')"
+              >
                 下架内容
               </el-button>
-              <el-button v-perm="'content:report:handle'" link type="info" @click="handle(row, 'ignored', false)">
+              <el-button v-perm="'content:report:handle'" link type="info" @click="handle(row, 'ignored')">
                 忽略
               </el-button>
             </template>
@@ -141,9 +162,9 @@ function handleReset() {
   handleSearch()
 }
 
-/** 处理举报：下架会同时把内容置为已下架 */
-async function handle(row: AdminReport, status: 'resolved' | 'ignored', archive: boolean) {
-  if (archive) {
+/** 处理举报：可下架内容或删除评论 */
+async function handle(row: AdminReport, status: 'resolved' | 'ignored', action?: 'note' | 'comment') {
+  if (action === 'note' && row.note) {
     const confirmed = await ElMessageBox.confirm(
       `确定下架内容「${row.note.title}」吗？下架后内容社区将不再展示。`,
       '下架内容',
@@ -152,8 +173,21 @@ async function handle(row: AdminReport, status: 'resolved' | 'ignored', archive:
     if (!confirmed) return
   }
 
-  await handleReport(row.id, { status, archive_note: archive })
-  ElMessage.success(archive ? '已下架并处理' : '已忽略该举报')
+  if (action === 'comment' && row.comment) {
+    const confirmed = await ElMessageBox.confirm(
+      `确定删除该评论吗？评论内容：${row.comment.content}`,
+      '删除评论',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+    ).catch(() => false)
+    if (!confirmed) return
+  }
+
+  await handleReport(row.id, {
+    status,
+    archive_note: action === 'note',
+    delete_comment: action === 'comment'
+  })
+  ElMessage.success(action === 'note' ? '已下架并处理' : action === 'comment' ? '已删除评论' : '已忽略该举报')
   loadList()
 }
 

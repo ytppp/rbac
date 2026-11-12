@@ -80,6 +80,7 @@
     "deleteConfirm": "确定删除这条评论吗？",
     "more": "查看更多评论",
     "empty": "还没有评论，来抢沙发吧",
+    "report": "举报",
     "floor": "{count}楼",
     "failed": "操作失败，请稍后重试"
   },

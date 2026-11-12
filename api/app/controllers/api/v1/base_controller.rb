@@ -11,6 +11,7 @@ module Api
       rescue_from RateLimitedError, with: :render_too_many_requests
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_record_invalid
+      rescue_from ActiveRecord::RecordNotUnique, with: :render_record_not_unique
       rescue_from ActiveRecord::RecordNotDestroyed, with: :render_record_not_destroyed
       rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
 
@@ -125,6 +126,11 @@ module Api
 
       def render_record_invalid(exception)
         render_error(:unprocessable_entity, "数据校验失败", exception.record.errors.to_hash)
+      end
+
+      # 并发下的唯一索引冲突：给前端一个可读的提示，而不是 500
+      def render_record_not_unique(_exception)
+        render_error(:unprocessable_entity, "请勿重复提交")
       end
 
       def render_record_not_destroyed(exception)

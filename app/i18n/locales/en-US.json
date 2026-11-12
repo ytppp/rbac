@@ -80,6 +80,7 @@
     "deleteConfirm": "Delete this comment?",
     "more": "Load more comments",
     "empty": "No comments yet. Be the first one!",
+    "report": "Report",
     "floor": "#{count}",
     "failed": "Something went wrong. Please try again."
   },

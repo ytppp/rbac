@@ -133,15 +133,6 @@
             </template>
 
             <el-button
-              text
-              size="small"
-              class="report-btn"
-              @click="openReport"
-            >
-              {{ $t('report.action') }}
-            </el-button>
-
-            <el-button
               round
               size="small"
               class="fav-btn"
@@ -201,8 +192,16 @@
           </article>
           <el-empty v-else :description="$t('detail.noContent')" />
 
+          <!-- 正文底部：举报入口 -->
+          <div class="report-bar">
+            <el-button text size="small" class="report-btn" @click="openReport()">
+              <icon name="i-carbon:warning-alt" />
+              <span class="ml-1">{{ $t('report.action') }}</span>
+            </el-button>
+          </div>
+
           <!-- 评论区 -->
-          <note-comments :note-id="Number(noteId)" />
+          <note-comments :note-id="Number(noteId)" @report="openCommentReport" />
         </div>
       </div>
 
@@ -321,10 +320,12 @@ function goTag(tagName: string) {
   navigateTo(localePath({ path: '/search', query: { tag: tagName } }))
 }
 
-// 举报：登录后可提交，同一内容只能举报一次
+// 举报：登录后可提交，同一内容 / 评论只能举报一次
 const reportVisible = ref(false)
 const reportSubmitting = ref(false)
 const reportForm = reactive({ reason: 'spam', detail: '' })
+// 举报对象：内容或评论
+const reportTarget = ref<{ type: 'note' | 'comment', id: number }>({ type: 'note', id: Number(noteId) })
 const reportReasons = computed(() =>
   ['spam', 'ads', 'abuse', 'copyright', 'other'].map((value) => ({
     value,
@@ -332,18 +333,29 @@ const reportReasons = computed(() =>
   })),
 )
 
-function openReport() {
+function openReport(target?: { type: 'note' | 'comment', id: number }) {
   if (!isLoggedIn.value) {
     navigateTo(localePath({ path: '/login', query: { redirect: route.fullPath } }))
     return
   }
+
+  reportTarget.value = target ?? { type: 'note', id: Number(noteId) }
   reportVisible.value = true
+}
+
+/** 评论区触发的举报 */
+function openCommentReport(comment: { id: number }) {
+  openReport({ type: 'comment', id: comment.id })
 }
 
 async function submitReport() {
   reportSubmitting.value = true
   try {
-    await $fetch(`/notes/${noteId}/reports`, {
+    const path = reportTarget.value.type === 'note'
+      ? `/notes/${reportTarget.value.id}/reports`
+      : `/comments/${reportTarget.value.id}/reports`
+
+    await $fetch(path, {
       baseURL: useApiBase(),
       method: 'POST',
       headers: authHeaders(),
@@ -936,7 +948,15 @@ function handleContentClick(event: MouseEvent) {
   cursor: pointer;
 }
 
-/* 举报入口：保持低调，悬停变危险色 */
+/* 正文底部的举报入口 */
+.report-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--c-line);
+}
+
 .report-btn {
   color: var(--c-ink-3);
   font-size: 12px;

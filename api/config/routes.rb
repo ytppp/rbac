@@ -42,6 +42,7 @@ Rails.application.routes.draw do
 
       # 举报与站内通知
       post  "notes/:id/reports", to: "reports#create"
+      post  "comments/:id/reports", to: "reports#create_comment"
       get   "notifications", to: "notifications#index"
       patch "notifications/read_all", to: "notifications#read_all"
       patch "notifications/:id/read", to: "notifications#read"
