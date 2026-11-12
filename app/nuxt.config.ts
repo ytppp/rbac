@@ -12,8 +12,10 @@ export default defineNuxtConfig({
     public: {
       // 浏览器直连 api，跨域由后端的 CORS_ORIGINS 放行
       apiBase: 'http://localhost:3000/api/v1',
-      // 管理后台地址：app 顶栏的「管理后台」入口用它拼 SSO 地址
+      // 管理后台地址：app 顶栏的「发布」入口用它拼 SSO 地址
       adminBase: process.env.ADMIN_BASE || 'http://localhost:5173',
+      // 站点对外地址：sitemap / robots / OG 链接用
+      siteBase: process.env.SITE_BASE || 'http://localhost:3001',
       AMapKey: process.env.AMAP_KEY,
       AMapSecurityJsCode: process.env.AMAP_SECURITY_JS_CODE,
     }
