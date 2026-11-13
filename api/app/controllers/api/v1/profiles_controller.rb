@@ -1,4 +1,4 @@
-# 个人中心接口：任何已登录用户都能操作「自己」，无需额外权限。
+﻿# 个人中心接口：任何已登录用户都能操作「自己」，无需额外权限。
 module Api
   module V1
     class ProfilesController < BaseController
@@ -19,11 +19,11 @@ module Api
       def password
         # 改自己的密码必须先验证当前密码
         unless current_user.authenticate(params[:current_password].to_s)
-          return render_error(:unprocessable_entity, "当前密码不正确", current_password: ["当前密码不正确"])
+          return render_error(:unprocessable_content, "当前密码不正确", current_password: ["当前密码不正确"])
         end
 
         if params[:password].to_s != params[:password_confirmation].to_s
-          return render_error(:unprocessable_entity, "两次输入的新密码不一致",
+          return render_error(:unprocessable_content, "两次输入的新密码不一致",
                               password_confirmation: ["两次输入的新密码不一致"])
         end
 

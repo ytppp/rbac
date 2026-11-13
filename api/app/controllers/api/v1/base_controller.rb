@@ -1,13 +1,17 @@
-# 所有 V1 接口控制器的父类，集中存放认证、授权、分页与统一错误响应等公共逻辑。
+﻿# 所有 V1 接口控制器的父类，集中存放认证、授权、分页与统一错误响应等公共逻辑。
 module Api
   module V1
     class BaseController < ActionController::API
+      include RateLimitable
+
       before_action :authenticate_user!
 
       rescue_from AuthError, with: :render_unauthorized
       rescue_from ForbiddenError, with: :render_forbidden
+      rescue_from RateLimitedError, with: :render_too_many_requests
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_record_invalid
+      rescue_from ActiveRecord::RecordNotUnique, with: :render_record_not_unique
       rescue_from ActiveRecord::RecordNotDestroyed, with: :render_record_not_destroyed
       rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
 
@@ -112,20 +116,36 @@ module Api
         render_error(:forbidden, exception.message)
       end
 
+      def render_too_many_requests(exception)
+        render_error(:too_many_requests, exception.message)
+      end
+
       def render_not_found(exception)
         render_error(:not_found, "记录不存在或已被删除", exception.message)
       end
 
       def render_record_invalid(exception)
-        render_error(:unprocessable_entity, "数据校验失败", exception.record.errors.to_hash)
+        render_error(:unprocessable_content, "数据校验失败", exception.record.errors.to_hash)
+      end
+
+      # 并发下的唯一索引冲突：给前端一个可读的提示，而不是 500
+      def render_record_not_unique(_exception)
+        render_error(:unprocessable_content, "请勿重复提交")
       end
 
       def render_record_not_destroyed(exception)
-        render_error(:unprocessable_entity, exception.record.errors.full_messages.join("；"))
+        render_error(:unprocessable_content, exception.record.errors.full_messages.join("；"))
       end
 
       def render_parameter_missing(exception)
         render_error(:bad_request, "缺少必要参数：#{exception.param}")
+      end
+
+      # 审核流水 reviewer 的"真实名"兜底：nil 表示系统自动触发
+      def reviewer_label(review)
+        return "系统" if review.reviewer.nil?
+
+        review.reviewer.name
       end
     end
   end

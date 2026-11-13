@@ -17,10 +17,9 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
-  config.log_tags = [:request_id]
+  # request_id 统一由 lograge 的 JSON 字段输出；这里不再用 tag 前缀，避免破坏单行 JSON
   config.logger = ActiveSupport::Logger.new($stdout)
     .tap { |logger| logger.formatter = Logger::Formatter.new }
-    .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   config.force_ssl = ENV["FORCE_SSL"].present?
 end

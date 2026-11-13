@@ -65,5 +65,31 @@ FactoryBot.define do
     likes_count { 100 }
     sequence(:channel) { |n| "频道#{n}" }
     sequence(:sort) { |n| n }
+    # app 端只展示 published，factory 默认 published 便于公开接口测试
+    status { :published }
+  end
+
+  factory :comment do
+    note
+    user
+    sequence(:content) { |n| "这是一条评论 #{n}" }
+  end
+
+  factory :report do
+    user
+    reason { "spam" }
+
+    # 默认举报内容；举报评论用 trait :comment
+    note
+
+    trait :comment do
+      note_id { nil }
+      comment
+    end
+  end
+
+  factory :notification do
+    user
+    action { "comment" }
   end
 end

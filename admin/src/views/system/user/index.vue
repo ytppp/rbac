@@ -28,6 +28,15 @@
 
       <el-table v-loading="loading" :data="list" border stripe>
         <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column label="头像" width="80">
+          <template #default="{ row }">
+            <!-- 有头像显示头像，没有则维持后台一贯的通用图标 -->
+            <el-avatar v-if="row.avatar_url" :src="row.avatar_url" :size="32" />
+            <el-avatar v-else :size="32" class="avatar-empty">
+              <el-icon><UserFilled /></el-icon>
+            </el-avatar>
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="昵称" min-width="120" />
         <el-table-column prop="email" label="邮箱" min-width="200" />
         <el-table-column label="角色" min-width="180">
@@ -163,7 +172,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Plus, Refresh, Search, UserFilled } from '@element-plus/icons-vue'
 import { createUser, deleteUser, fetchUsers, resetUserPassword, updateUser, updateUserStatus } from '@/api/user'
 import { fetchRoleOptions } from '@/api/role'
 import { SUPER_ADMIN_ROLE, useUserStore } from '@/stores/user'
@@ -404,5 +413,9 @@ onMounted(() => {
 
 .action-group {
   display: inline-block;
+}
+
+.avatar-empty {
+  background: #c0c4cc;
 }
 </style>

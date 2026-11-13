@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { getMe, login as loginApi, logout as logoutApi } from '@/api/auth'
-import { getToken, removeToken, setToken } from '@/utils/auth'
+import { getToken, removeTokens, setTokens } from '@/utils/auth'
 import type { UserInfo } from '@/types'
 
 export const SUPER_ADMIN_ROLE = 'super_admin'
@@ -30,8 +30,8 @@ export const useUserStore = defineStore('user', () => {
 
   async function login(payload: { email: string; password: string }) {
     const result = await loginApi(payload)
-    token.value = result.token
-    setToken(result.token)
+    token.value = result.access_token
+    setTokens(result.access_token, result.refresh_token)
     userInfo.value = result.user
     permissions.value = result.permissions || []
     roles.value = result.roles || []
@@ -51,7 +51,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     permissions.value = []
     roles.value = []
-    removeToken()
+    removeTokens()
   }
 
   async function logout() {

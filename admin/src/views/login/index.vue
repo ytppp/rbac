@@ -43,7 +43,7 @@ import { Lock, Message } from '@element-plus/icons-vue'
 import { usePermissionStore } from '@/stores/permission'
 import { useUserStore } from '@/stores/user'
 
-const appTitle = import.meta.env.VITE_APP_TITLE || '权限管理平台'
+const appTitle = import.meta.env.VITE_APP_TITLE || '行迹·管理平台'
 
 const route = useRoute()
 const router = useRouter()

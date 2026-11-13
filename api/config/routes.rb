@@ -1,28 +1,101 @@
 # 路由表：请求地址 -> 控制器方法的映射，全部挂在 /api/v1 前缀下。
 Rails.application.routes.draw do
+  # 容器健康检查：不鉴权，只验证进程与数据库连接
+  get "health", to: "health#show"
+
+  # API 文档：Swagger UI + openapi 描述文件；生产需显式设置 API_DOCS_ENABLED=true
+  if Rails.env.development? || Rails.env.test? || ENV["API_DOCS_ENABLED"] == "true"
+    mount Rswag::Ui::Engine => "/api-docs"
+    mount Rswag::Api::Engine => "/api-docs"
+  end
+
   namespace :api do
     namespace :v1 do
       post   "auth/login",  to: "auth#login"
+      post   "auth/register", to: "auth#register"
+      post   "auth/refresh", to: "auth#refresh"
       delete "auth/logout", to: "auth#logout"
       get    "auth/me",     to: "auth#me"
 
       get "menus", to: "menus#index"
 
       # 内容社区（app 模块）公开只读接口，无需登录
-      resources :notes, only: %i[index] do
+      resources :notes, only: %i[index show] do
+        member do
+          post   :like
+          delete :unlike
+          post   :favorite
+          delete :unfavorite
+        end
+      end
+
+      # 内容评论：列表公开，发布 / 删除 / 点赞需要登录
+      get  "notes/:note_id/comments", to: "comments#index"
+      post "notes/:note_id/comments", to: "comments#create"
+      resources :comments, only: %i[destroy] do
         member do
           post   :like
           delete :unlike
         end
       end
 
+      # 个人中心：我发布的 / 我的收藏 / 我点赞的
+      get "me/notes",     to: "me#notes"
+      get "me/favorites", to: "me#favorites"
+      get "me/likes",     to: "me#likes"
+      # 作者侧看自己内容的审核历史（脱敏显示审核人）
+      get "me/notes/:id/reviews", to: "me#note_reviews"
+
+      # 作者主页：公开
+      get "authors/:id", to: "authors#show"
+
+      # 内容标签：公开读取
+      resources :tags, only: %i[index]
+
+      # 举报与站内通知
+      post  "notes/:id/reports", to: "reports#create"
+      post  "comments/:id/reports", to: "reports#create_comment"
+      get   "notifications", to: "notifications#index"
+      patch "notifications/read_all", to: "notifications#read_all"
+      patch "notifications/:id/read", to: "notifications#read"
+
       # 管理后台内容管理，需要 content:note:* 权限
       namespace :admin do
-        resources :notes, only: %i[index create update destroy]
+        # 首页数据看板
+        get "dashboard/stats", to: "dashboard#stats"
+
+        # 内容管理：作者默认只看到自己的，超管/审核看全部（后端强校验）
+        resources :notes, only: %i[index create update destroy] do
+          member do
+            # 提交审核：draft / rejected → pending
+            post :submit
+            # 作者撤回待审 → draft
+            post :withdraw
+            # 审核历史（审核侧看全量，前端传 is_reviewer 决定脱敏）
+            get  :reviews, to: 'notes#reviews'
+          end
+        end
+
+        # 审核队列与操作：独立模块，需要 content:review:* 权限
+        resources :reviews, only: %i[index] do
+          member do
+            post :approve
+            post :reject
+          end
+        end
+
+        # 标签维护：需要 content:tag:* 权限
+        resources :tags, only: %i[index create update destroy]
+        # 举报处理：需要 content:report:* 权限
+        resources :reports, only: %i[index update]
+        # 内容详情页的多图上传：POST /api/v1/admin/note_images
+        resources :note_images, only: %i[create]
       end
 
       resource :profile, only: %i[show update], controller: "profiles" do
         patch :password
+        # 头像的上传 / 删除：POST /api/v1/profile/avatar、DELETE /api/v1/profile/avatar
+        resource :avatar, only: %i[create destroy], controller: "avatars"
       end
 
       resources :users, only: %i[index show create update destroy] do

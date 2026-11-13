@@ -1,0 +1,203 @@
+{
+  "brand": {
+    "name": "Tracemark",
+    "sub": "TRACEMARK"
+  },
+  "header": {
+    "searchPlaceholder": "Search destinations, routes or travel inspiration",
+    "admin": "Admin",
+    "publish": "Publish",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "me": "Me"
+  },
+  "home": {
+    "eyebrow": "TRAVEL JOURNAL",
+    "heroAlt": "Coastal road scenery",
+    "title": "Turn every departure into a story",
+    "desc": "Routes on the map, photos along the way, and travel notes — all in one place.",
+    "tagRoute": "Route map",
+    "tagAlbum": "Photo album",
+    "loadFailed": "Failed to load content. Please make sure the api service is running.",
+    "loading": "Loading…",
+    "loadingMore": "Loading more…",
+    "empty": "Nothing found. Try another keyword.",
+    "end": "~ You have reached the end ~"
+  },
+  "channel": {
+    "eyebrow": "DESTINATIONS",
+    "title": "Travel channels"
+  },
+  "common": {
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "cancel": "Cancel"
+  },
+  "notification": {
+    "title": "Notifications",
+    "someone": "Someone",
+    "comment": "{name} commented on your post {title}",
+    "like": "{name} liked your post {title}",
+    "review": "Your post {title} has a new review result",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet"
+  },
+  "report": {
+    "action": "Report",
+    "title": "Report content",
+    "reason": "Reason",
+    "detail": "Details",
+    "detailPlaceholder": "Optional: describe the problem",
+    "submit": "Submit report",
+    "success": "Report submitted. We will review it soon.",
+    "failed": "Failed to submit. Please try again.",
+    "reasons": {
+      "spam": "Spam",
+      "ads": "Advertising",
+      "abuse": "Abuse or harassment",
+      "copyright": "Copyright infringement",
+      "other": "Other"
+    }
+  },
+  "search": {
+    "title": "Search results",
+    "resultFor": "Content related to {q}",
+    "taggedWith": "Content tagged {tag}",
+    "empty": "Nothing found. Try another keyword."
+  },
+  "comment": {
+    "title": "Comments",
+    "sortHot": "Top",
+    "sortTime": "Newest",
+    "placeholder": "Leave a friendly comment",
+    "loginPlaceholder": "Log in to join the discussion",
+    "submit": "Post",
+    "reply": "Reply",
+    "replyPlaceholder": "Reply to {'@'}{name}",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this comment?",
+    "more": "Load more comments",
+    "empty": "No comments yet. Be the first one!",
+    "report": "Report",
+    "floor": "#{count}",
+    "failed": "Something went wrong. Please try again."
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{count} min ago",
+    "hoursAgo": "{count} hr ago",
+    "daysAgo": "{count} d ago"
+  },
+  "gallery": {
+    "alt": "Photo",
+    "altIndex": "{alt} {index}"
+  },
+  "detail": {
+    "back": "Back to Tracemark",
+    "notFound": "This post does not exist or has been deleted",
+    "map": "Trip map",
+    "segmentCount": "{count} legs",
+    "tripCount": "{count} legs",
+    "album": "Travel album",
+    "zoomIn": "Click to enlarge",
+    "hidePhotos": "Hide photos",
+    "showPhotos": "Show photos",
+    "noPhotos": "No photos in this leg",
+    "noPhotosOther": "No photos in this leg, {count} in other legs",
+    "toc": "Trip contents",
+    "noContent": "No content yet",
+    "favorite": "Save",
+    "favorited": "Saved"
+  },
+  "map": {
+    "notice": "Notice",
+    "noticeClickAdd": "1.Left-click on the map to add a new marker",
+    "noticeRightClickDelete": "2.Right-click on the marker to delete it",
+    "noticeDrag": "3.Left-click and hold the marker to drag it to a new position",
+    "noticeDoubleClickInfo": "4.Left-double-click the marker to add marker information",
+    "save": "Save",
+    "config": "Config",
+    "preview": "Preview",
+    "position": "Position",
+    "coordinate": "Coordinate",
+    "description": "Description",
+    "photo": "Pictures",
+    "cancel": "Cancel",
+    "expand": "Expand",
+    "fold": "Fold",
+    "close": "Close",
+    "doubleClickInfo": "Double-click to add marker information"
+  },
+  "site": {
+    "email": "Email: hi{'@'}example.com",
+    "phone": "Phone: 010-8888 8888",
+    "icp": "ICP filing: Shanghai ICP No. 00000000-1",
+    "police": "Public security filing 31000000000000",
+    "copyright": "© 2026 Tracemark",
+    "linkAgreement": "User agreement",
+    "linkLicense": "Business license",
+    "linkPrivacy": "Privacy policy",
+    "linkAbout": "About us",
+    "linkGuide": "Guide",
+    "linkFriends": "Friends",
+    "linkMore": "More articles"
+  },
+  "theme": {
+    "auto": "Auto",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "auth": {
+    "loginEyebrow": "WELCOME BACK",
+    "loginTitle": "Log in to Tracemark",
+    "loginDesc": "Save every journey you have taken",
+    "email": "Email",
+    "emailPlaceholder": "you{'@'}example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "login": "Log in",
+    "loggingIn": "Logging in…",
+    "noAccount": "No account yet?",
+    "goRegister": "Sign up",
+    "registerEyebrow": "JOIN THE JOURNEY",
+    "registerTitle": "Join Tracemark",
+    "registerDesc": "Sign up to share travel notes and manage content",
+    "name": "Nickname",
+    "namePlaceholder": "What should we call you?",
+    "passwordNewPlaceholder": "At least 6 characters",
+    "confirmPassword": "Confirm password",
+    "confirmPlaceholder": "Enter the password again",
+    "register": "Sign up and enter",
+    "registering": "Signing up…",
+    "hasAccount": "Already have an account?",
+    "goLogin": "Log in",
+    "loginFailed": "Login failed. Please try again later.",
+    "registerFailed": "Sign-up failed. Please try again later.",
+    "emailRequired": "Please enter your email",
+    "emailInvalid": "Invalid email format",
+    "passwordRequired": "Please enter your password",
+    "passwordMin": "Password must be at least 6 characters",
+    "nameRequired": "Please enter a nickname",
+    "confirmRequired": "Please enter the password again",
+    "confirmMismatch": "The two passwords do not match"
+  },
+  "profile": {
+    "notes": "My posts",
+    "favorites": "Saved",
+    "likes": "Liked",
+    "emptyNotes": "You have not posted anything yet",
+    "emptyFavorites": "You have not saved anything yet",
+    "emptyLikes": "You have not liked anything yet"
+  },
+  "author": {
+    "notesCount": "{count} posts",
+    "empty": "This author has not posted anything yet",
+    "notFound": "Author not found or has been deleted"
+  },
+  "meta": {
+    "title": "Tracemark · Travel Notes",
+    "description": "Tracemark is a travel content community that strings trips together with maps and collects scenery along the way in photos."
+  }
+}

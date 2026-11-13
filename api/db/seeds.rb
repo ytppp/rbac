@@ -4,7 +4,7 @@
 # ---------- 权限树 ----------
 PERMISSION_TREE = [
   {
-    name: "仪表盘",
+    name: "首页",
     code: "dashboard",
     type: :menu,
     path: "/dashboard",
@@ -92,7 +92,56 @@ PERMISSION_TREE = [
           { name: "查询内容", code: "content:note:list", type: :button, sort: 1 },
           { name: "新增内容", code: "content:note:create", type: :button, sort: 2 },
           { name: "编辑内容", code: "content:note:update", type: :button, sort: 3 },
-          { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 }
+          { name: "删除内容", code: "content:note:delete", type: :button, sort: 4 },
+          # 作者提交/撤回自己的内容，不属审核动作
+          { name: "提交审核", code: "content:note:submit", type: :button, sort: 5 },
+          { name: "撤回内容", code: "content:note:withdraw", type: :button, sort: 6 }
+        ]
+      },
+      {
+        # 审核模块：独立于内容管理，只有审核视角的用户才有入口
+        name: "审核管理",
+        code: "content:review",
+        type: :menu,
+        path: "/content/review",
+        component: "content/review/index",
+        icon: "CircleCheck",
+        sort: 2,
+        children: [
+          { name: "审核队列", code: "content:review:list", type: :button, sort: 1 },
+          { name: "审核通过", code: "content:review:approve", type: :button, sort: 2 },
+          { name: "审核驳回", code: "content:review:reject", type: :button, sort: 3 },
+          { name: "审核历史", code: "content:review:history", type: :button, sort: 4 }
+        ]
+      },
+      {
+        # 标签维护：用户在发布内容时可创建标签，管理员在这里改名 / 排序 / 删除
+        name: "标签管理",
+        code: "content:tag",
+        type: :menu,
+        path: "/content/tag",
+        component: "content/tag/index",
+        icon: "PriceTag",
+        sort: 2,
+        children: [
+          { name: "查询标签", code: "content:tag:list", type: :button, sort: 1 },
+          { name: "新增标签", code: "content:tag:create", type: :button, sort: 2 },
+          { name: "编辑标签", code: "content:tag:update", type: :button, sort: 3 },
+          { name: "删除标签", code: "content:tag:delete", type: :button, sort: 4 }
+        ]
+      },
+      {
+        # 举报处理：用户举报内容后进入待处理队列
+        name: "举报管理",
+        code: "content:report",
+        type: :menu,
+        path: "/content/report",
+        component: "content/report/index",
+        icon: "Warning",
+        sort: 3,
+        children: [
+          { name: "查询举报", code: "content:report:list", type: :button, sort: 1 },
+          { name: "处理举报", code: "content:report:handle", type: :button, sort: 2 }
         ]
       }
     ]
@@ -116,6 +165,9 @@ def seed_permissions(nodes, parent = nil)
     seed_permissions(node[:children] || [], permission)
   end
 end
+
+# 删掉已经废弃的旧权限码（升级脚本）
+Permission.find_by(code: "content:note:review")&.destroy!
 
 seed_permissions(PERMISSION_TREE)
 
@@ -160,6 +212,43 @@ viewer.assign_attributes(
 viewer.save!
 viewer.permission_ids = Permission.where(
   code: %w[dashboard system system:user system:user:list system:role system:role:list]
+).pluck(:id)
+
+# 内容社区注册用户：后台只看首页 + 内容管理（自己的内容），能提交审核/撤回
+registered_user = Role.find_or_initialize_by(code: Role::REGISTERED_USER_CODE)
+registered_user.assign_attributes(
+  name: "注册用户",
+  description: "从内容社区注册的用户，仅可进入后台首页与内容管理（仅自己的内容）",
+  status: :enabled,
+  built_in: true
+)
+registered_user.save!
+registered_user.permission_ids = Permission.where(
+  code: %w[
+    dashboard
+    content content:note
+    content:note:list content:note:create content:note:update content:note:delete
+    content:note:submit content:note:withdraw
+    content:review:history
+  ]
+).pluck(:id)
+
+# 内容审核员：独立角色，只进审核模块处理队列，不进内容管理页。
+# 仍然保留 content:note:list 按钮权限（审核历史弹层 API 会用），
+# 但**去掉 content:note 菜单节点**——菜单树不渲染就不会出现入口。
+reviewer = Role.find_or_initialize_by(code: "reviewer")
+reviewer.assign_attributes(
+  name: "内容审核员",
+  description: "审核内容的专属角色，仅可进入审核模块处理待审队列与查看审核历史",
+  status: :enabled,
+  built_in: true
+)
+reviewer.save!
+reviewer.permission_ids = Permission.where(
+  code: %w[
+    dashboard
+    content content:review content:review:list content:review:approve content:review:reject content:review:history
+  ]
 ).pluck(:id)
 
 # ---------- 账号 ----------
@@ -353,7 +442,9 @@ note_seeds.each_with_index do |seed, index|
     avatar_color: note_avatar_colors[index % note_avatar_colors.length],
     likes_count: seed[:likes],
     channel: seed[:channel],
-    sort: index + 1
+    sort: index + 1,
+    # seed 数据一律从 draft 起，超管登录后可在审核模块批量通过
+    status: "draft"
   )
   note.save!
 end

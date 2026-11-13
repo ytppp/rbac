@@ -1,0 +1,203 @@
+{
+  "brand": {
+    "name": "行迹",
+    "sub": "TRACEMARK"
+  },
+  "header": {
+    "searchPlaceholder": "搜索目的地、路线或旅行灵感",
+    "admin": "管理后台",
+    "publish": "发布",
+    "login": "登录",
+    "logout": "退出登录",
+    "profile": "个人中心",
+    "me": "我"
+  },
+  "home": {
+    "eyebrow": "TRAVEL JOURNAL",
+    "heroAlt": "海岸公路旅行风景",
+    "title": "把每一次出发，收藏成故事",
+    "desc": "地图路线、沿途照片与旅行手记，都在这里。",
+    "tagRoute": "路线地图",
+    "tagAlbum": "沿途相册",
+    "loadFailed": "内容加载失败，请确认 api 服务已启动",
+    "loading": "加载中…",
+    "loadingMore": "正在加载更多…",
+    "empty": "没有找到相关内容，换个关键词试试",
+    "end": "~我是有底线的~"
+  },
+  "channel": {
+    "eyebrow": "DESTINATIONS",
+    "title": "旅行频道"
+  },
+  "common": {
+    "loadMore": "加载更多",
+    "loading": "加载中…",
+    "cancel": "取消"
+  },
+  "notification": {
+    "title": "通知",
+    "someone": "有人",
+    "comment": "{name} 评论了你的内容「{title}」",
+    "like": "{name} 赞了你的内容「{title}」",
+    "review": "你的内容「{title}」审核状态已更新",
+    "markAllRead": "全部已读",
+    "empty": "暂时没有通知"
+  },
+  "report": {
+    "action": "举报",
+    "title": "举报内容",
+    "reason": "举报原因",
+    "detail": "补充说明",
+    "detailPlaceholder": "可选：描述具体问题",
+    "submit": "提交举报",
+    "success": "举报已提交，我们会尽快处理",
+    "failed": "举报失败，请稍后重试",
+    "reasons": {
+      "spam": "垃圾信息",
+      "ads": "广告营销",
+      "abuse": "辱骂或攻击",
+      "copyright": "侵权内容",
+      "other": "其他"
+    }
+  },
+  "search": {
+    "title": "搜索结果",
+    "resultFor": "与「{q}」相关的内容",
+    "taggedWith": "标签「{tag}」下的内容",
+    "empty": "没有找到相关内容，换个关键词试试"
+  },
+  "comment": {
+    "title": "评论",
+    "sortHot": "最热",
+    "sortTime": "最新",
+    "placeholder": "发一条友善的评论吧",
+    "loginPlaceholder": "登录后参与评论",
+    "submit": "发布",
+    "reply": "回复",
+    "replyPlaceholder": "回复 {'@'}{name}",
+    "cancel": "取消",
+    "delete": "删除",
+    "deleteConfirm": "确定删除这条评论吗？",
+    "more": "查看更多评论",
+    "empty": "还没有评论，来抢沙发吧",
+    "report": "举报",
+    "floor": "{count}楼",
+    "failed": "操作失败，请稍后重试"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{count} 分钟前",
+    "hoursAgo": "{count} 小时前",
+    "daysAgo": "{count} 天前"
+  },
+  "gallery": {
+    "alt": "图片",
+    "altIndex": "{alt} 第 {index} 张"
+  },
+  "detail": {
+    "back": "返回行迹",
+    "notFound": "内容不存在或已被删除",
+    "map": "行程地图",
+    "segmentCount": "{count} 段",
+    "tripCount": "{count} 段行程",
+    "album": "旅途相册",
+    "zoomIn": "点击看大图",
+    "hidePhotos": "隐藏图片",
+    "showPhotos": "查看图片",
+    "noPhotos": "本段暂无图片",
+    "noPhotosOther": "本段暂无图片，其他段共 {count} 张",
+    "toc": "行程目录",
+    "noContent": "暂无正文内容",
+    "favorite": "收藏",
+    "favorited": "已收藏"
+  },
+  "map": {
+    "notice": "注意",
+    "noticeClickAdd": "1、鼠标左键点击地图，新增标记点",
+    "noticeRightClickDelete": "2、鼠标右键点击标记点，进行删除",
+    "noticeDrag": "3、鼠标左键点击标记点不放，可拖动标记点位置",
+    "noticeDoubleClickInfo": "4、鼠标左键双击标记点，可添加标记点信息",
+    "save": "保存",
+    "config": "配置",
+    "preview": "预览",
+    "position": "位置",
+    "coordinate": "坐标",
+    "description": "描述",
+    "photo": "照片",
+    "cancel": "取消",
+    "expand": "展开",
+    "fold": "折叠",
+    "close": "关闭",
+    "doubleClickInfo": "双击可添加标记点信息"
+  },
+  "site": {
+    "email": "投稿邮箱：hi{'@'}example.com",
+    "phone": "电话：010-8888 8888",
+    "icp": "ICP 备案号：沪 ICP 备 00000000 号-1",
+    "police": "公安网安备 31000000000000 号",
+    "copyright": "© 2026 行迹",
+    "linkAgreement": "用户协议",
+    "linkLicense": "营业执照",
+    "linkPrivacy": "隐私政策",
+    "linkAbout": "关于我们",
+    "linkGuide": "使用指南",
+    "linkFriends": "友情链接",
+    "linkMore": "更多文章"
+  },
+  "theme": {
+    "auto": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "auth": {
+    "loginEyebrow": "WELCOME BACK",
+    "loginTitle": "登录行迹",
+    "loginDesc": "登录后，收藏你走过的每一段旅程",
+    "email": "邮箱",
+    "emailPlaceholder": "you{'@'}example.com",
+    "password": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "login": "登录",
+    "loggingIn": "登录中…",
+    "noAccount": "还没有账号？",
+    "goRegister": "立即注册",
+    "registerEyebrow": "JOIN THE JOURNEY",
+    "registerTitle": "加入行迹",
+    "registerDesc": "注册后即可发布旅行手记，并进入内容管理",
+    "name": "昵称",
+    "namePlaceholder": "怎么称呼你",
+    "passwordNewPlaceholder": "至少 6 位",
+    "confirmPassword": "确认密码",
+    "confirmPlaceholder": "再输入一次密码",
+    "register": "注册并进入",
+    "registering": "注册中…",
+    "hasAccount": "已经有账号？",
+    "goLogin": "去登录",
+    "loginFailed": "登录失败，请稍后重试",
+    "registerFailed": "注册失败，请稍后重试",
+    "emailRequired": "请输入邮箱",
+    "emailInvalid": "邮箱格式不正确",
+    "passwordRequired": "请输入密码",
+    "passwordMin": "密码至少 6 位",
+    "nameRequired": "请输入昵称",
+    "confirmRequired": "请再次输入密码",
+    "confirmMismatch": "两次输入的密码不一致"
+  },
+  "profile": {
+    "notes": "我的发布",
+    "favorites": "我的收藏",
+    "likes": "我的点赞",
+    "emptyNotes": "还没有发布过内容",
+    "emptyFavorites": "还没有收藏任何内容",
+    "emptyLikes": "还没有点赞过内容"
+  },
+  "author": {
+    "notesCount": "共 {count} 篇内容",
+    "empty": "这位作者还没有发布内容",
+    "notFound": "作者不存在或已被删除"
+  },
+  "meta": {
+    "title": "行迹 · 旅行手记",
+    "description": "行迹是一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。"
+  }
+}

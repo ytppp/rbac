@@ -8,6 +8,10 @@ export function setupRouterGuard(router: Router) {
     const userStore = useUserStore()
     const permissionStore = usePermissionStore()
 
+    // SSO 页面负责消费 app 传来的 hash token，必须直接放行；
+    // 否则已登录状态下会被下面的动态路由预加载拦截，丢掉 hash 后落到个人中心
+    if (to.path === '/sso') return true
+
     // 未登录：放行白名单页面，其余跳转登录页并记住来源
     if (!userStore.token) {
       if (to.meta.public) return true
@@ -37,7 +41,7 @@ export function setupRouterGuard(router: Router) {
   })
 
   router.afterEach((to) => {
-    const appTitle = import.meta.env.VITE_APP_TITLE || '权限管理平台'
+    const appTitle = import.meta.env.VITE_APP_TITLE || ''
     const title = to.meta.title as string | undefined
     document.title = title ? `${title} - ${appTitle}` : appTitle
   })

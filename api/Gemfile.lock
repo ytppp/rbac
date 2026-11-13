@@ -80,6 +80,8 @@ GEM
       mutex_m
       securerandom (>= 0.3)
       tzinfo (~> 2.0)
+    addressable (2.9.2)
+      public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.22)
@@ -120,6 +122,9 @@ GEM
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.21.2)
+    json-schema (6.2.1)
+      addressable (~> 2.8)
+      bigdecimal (>= 3.1, < 5)
     jwt (2.10.3)
       base64
     kaminari (1.2.2)
@@ -137,6 +142,13 @@ GEM
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     logger (1.7.0)
+    lograge (0.15.1)
+      actionpack (>= 4)
+      activesupport (>= 4)
+      logger
+      railties (>= 4)
+      request_store (~> 1.0)
+    logstash-event (1.2.02)
     loofah (2.25.2)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
@@ -174,6 +186,7 @@ GEM
       prettyprint
     prettyprint (0.2.0)
     prism (1.9.0)
+    public_suffix (7.0.5)
     puma (8.0.2)
       nio4r (~> 2.0)
     racc (1.8.1)
@@ -229,9 +242,15 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
+    redis (6.0.0)
+      redis-client (= 0.30.1)
+    redis-client (0.30.1)
+      connection_pool
     regexp_parser (2.12.0)
     reline (0.7.0)
       io-console (~> 0.5)
+    request_store (1.7.0)
+      rack (>= 1.4)
     rspec-core (3.13.6)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.5)
@@ -249,6 +268,17 @@ GEM
       rspec-mocks (~> 3.13)
       rspec-support (~> 3.13)
     rspec-support (3.13.7)
+    rswag-api (2.17.0)
+      activesupport (>= 5.2, < 8.2)
+      railties (>= 5.2, < 8.2)
+    rswag-specs (2.17.0)
+      activesupport (>= 5.2, < 8.2)
+      json-schema (>= 2.2, < 7.0)
+      railties (>= 5.2, < 8.2)
+      rspec-core (>= 2.14)
+    rswag-ui (2.17.0)
+      actionpack (>= 5.2, < 8.2)
+      railties (>= 5.2, < 8.2)
     rubocop (1.91.0)
       json (>= 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -271,6 +301,12 @@ GEM
       rubocop-ast (>= 1.44.0, < 2.0)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    sidekiq (8.1.7)
+      connection_pool (>= 3.0.0)
+      json (>= 2.16.0)
+      logger (>= 1.7.0)
+      rack (>= 3.2.0)
+      redis-client (>= 0.29.0)
     thor (1.5.0)
     timeout (0.6.1)
     tsort (0.2.0)
@@ -297,12 +333,19 @@ DEPENDENCIES
   json (~> 2.7)
   jwt (~> 2.8)
   kaminari (~> 1.2)
+  lograge
+  logstash-event
   pg (~> 1.5)
   puma (>= 5.0)
   rack-cors (~> 2.0)
   rails (~> 7.1.5)
+  redis (~> 6.0)
   rspec-rails (~> 7.0)
+  rswag-api
+  rswag-specs
+  rswag-ui
   rubocop-rails
+  sidekiq (~> 8.1)
   tzinfo-data
 
 RUBY VERSION

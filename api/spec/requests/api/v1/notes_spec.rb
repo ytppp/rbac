@@ -18,8 +18,9 @@ RSpec.describe "内容接口（app 模块）", type: :request do
   it "返回前端渲染所需的字段" do
     get "/api/v1/notes"
 
-    expect(json_body["items"].first.keys).to match_array(
-      %w[id title cover cover_ratio author avatar_color likes channel]
+    expect(json_body["items"].first.keys).to include(
+      "id", "title", "cover", "cover_ratio", "author", "author_id",
+      "avatar_color", "likes", "channel", "tags", "liked", "favorited"
     )
   end
 

@@ -3,6 +3,9 @@ class Role < ApplicationRecord
   # 超管角色标识，拥有该角色的用户跳过权限校验
   SUPER_ADMIN_CODE = "super_admin".freeze
 
+  # 内容社区注册用户默认角色：只能进入后台首页与内容管理
+  REGISTERED_USER_CODE = "registered_user".freeze
+
   STATUSES = { disabled: 0, enabled: 1 }.freeze
 
   enum :status, STATUSES, validate: true

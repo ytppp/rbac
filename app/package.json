@@ -1,5 +1,5 @@
 {
-  "name": "rbac-app",
+  "name": "tracemark-app",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,11 +7,33 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "lint": "nuxt prepare && eslint .",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "nuxt": "^3",
-    "vue": "^3.5.0",
-    "vue-router": "^4.4.0"
+    "@amap/amap-jsapi-loader": "^1.0.1",
+    "@nuxtjs/i18n": "10.2.1",
+    "@pinia/nuxt": "^0.11.3",
+    "element-plus": "^2.12.0",
+    "headroom.js": "^0.12.0",
+    "marked": "^15.0.12",
+    "nuxt": "^4.6.3",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0",
+    "vue-waterfall-plugin-next": "^3.0.1"
+  },
+  "devDependencies": {
+    "@amap/amap-jsapi-types": "^0.0.15",
+    "@element-plus/nuxt": "^1.1.4",
+    "@iconify-json/carbon": "^1.2.15",
+    "@nuxt/eslint": "1.12.1",
+    "@types/headroom.js": "^0.12.4",
+    "@unocss/nuxt": "^66.11.0",
+    "@vueuse/core": "^14.1.0",
+    "@vueuse/nuxt": "^14.1.0",
+    "typescript": "^5.9.3",
+    "unocss": "^66.11.0",
+    "vue-tsc": "^3.3.13"
   }
 }

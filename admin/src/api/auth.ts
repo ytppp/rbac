@@ -17,6 +17,20 @@ export function updateProfile(data: { name?: string; email?: string }) {
   return request.patch<never, UserInfo>('/profile', data)
 }
 
+/** 上传头像（multipart），返回更新后的当前用户 */
+export function uploadAvatar(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post<never, UserInfo>('/profile/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+/** 删除头像 */
+export function removeAvatar() {
+  return request.delete<never, UserInfo>('/profile/avatar')
+}
+
 export function updatePassword(data: {
   current_password: string
   password: string

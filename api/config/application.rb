@@ -13,7 +13,7 @@ require "action_view/railtie"
 # 读取 Gemfile，把里面的 gem 自动加载进来
 Bundler.require(*Rails.groups)
 
-module RbacAdmin
+module Tracemark
   class Application < Rails::Application
     # 加载 Rails 7.1 的默认配置（框架推荐的一套默认值，升级时保持行为一致）
     config.load_defaults 7.1
@@ -26,6 +26,10 @@ module RbacAdmin
     # 两者分开设置是常见做法：存 UTC 便于跨时区协作，展示时按业务时区来。
     config.time_zone = "Beijing"
     config.active_record.default_timezone = :utc
+
+    # Sidekiq 异步队列：评论 / 点赞 / 审核触发的通知走 Redis 异步处理，
+    # 不再阻塞 API 响应；开发环境没 Redis 时回退到 :async（进程内执行）。
+    config.active_job.queue_adapter = ENV["REDIS_URL"].present? ? :sidekiq : :async
 
     # 生成器配置：以后用 rails generate 生成代码时的默认选项
     config.generators do |g|
