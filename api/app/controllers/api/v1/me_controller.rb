@@ -25,6 +25,25 @@ module Api
         render_notes(scope)
       end
 
+      # GET /api/v1/me/notes/:id/reviews —— 作者看自己某条内容的审核历史
+      # 审核人姓名会脱敏（审核员 N），审核意见全量可见
+      def note_reviews
+        note = current_user.notes.find(params[:id])
+        items = note.note_reviews.timeline.map do |r|
+          {
+            id: r.id,
+            action: r.action,
+            from_status: Note::STATUSES.key(r.from_status),
+            to_status: Note::STATUSES.key(r.to_status),
+            reason: r.reason,
+            # 作者侧：自己操作或系统触发 → 真实名；审核员操作 → 脱敏
+            reviewer_display: (r.reviewer == current_user || r.reviewer.nil?) ? reviewer_label(r) : "审核员 #{r.reviewer.id % 9 + 1}",
+            created_at: r.created_at.iso8601
+          }
+        end
+        render json: { items: items }
+      end
+
       private
 
       def render_notes(scope, all_favorited: false)

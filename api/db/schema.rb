@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_12_000009) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_13_000010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -55,6 +55,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_000009) do
     t.datetime "updated_at", null: false
     t.index ["note_id"], name: "index_note_likes_on_note_id"
     t.index ["user_id", "note_id"], name: "index_note_likes_on_user_id_and_note_id", unique: true
+  end
+
+  create_table "note_reviews", force: :cascade do |t|
+    t.bigint "note_id", null: false
+    t.integer "from_status", null: false
+    t.integer "to_status", null: false
+    t.string "action", null: false
+    t.text "reason"
+    t.bigint "reviewer_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["note_id", "created_at"], name: "index_note_reviews_on_note_id_and_created_at"
+    t.index ["note_id"], name: "index_note_reviews_on_note_id"
+    t.index ["reviewer_id"], name: "index_note_reviews_on_reviewer_id"
   end
 
   create_table "note_tags", force: :cascade do |t|
@@ -201,6 +215,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_12_000009) do
   add_foreign_key "note_favorites", "users", on_delete: :cascade
   add_foreign_key "note_likes", "notes", on_delete: :cascade
   add_foreign_key "note_likes", "users", on_delete: :cascade
+  add_foreign_key "note_reviews", "notes"
+  add_foreign_key "note_reviews", "users", column: "reviewer_id"
   add_foreign_key "note_tags", "notes", on_delete: :cascade
   add_foreign_key "note_tags", "tags", on_delete: :cascade
   add_foreign_key "notes", "users", on_delete: :nullify

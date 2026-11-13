@@ -140,6 +140,13 @@ module Api
       def render_parameter_missing(exception)
         render_error(:bad_request, "缺少必要参数：#{exception.param}")
       end
+
+      # 审核流水 reviewer 的"真实名"兜底：nil 表示系统自动触发
+      def reviewer_label(review)
+        return "系统" if review.reviewer.nil?
+
+        review.reviewer.name
+      end
     end
   end
 end

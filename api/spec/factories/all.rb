@@ -65,6 +65,8 @@ FactoryBot.define do
     likes_count { 100 }
     sequence(:channel) { |n| "频道#{n}" }
     sequence(:sort) { |n| n }
+    # app 端只展示 published，factory 默认 published 便于公开接口测试
+    status { :published }
   end
 
   factory :comment do

@@ -11,7 +11,11 @@ RSpec.describe "注册接口", type: :request do
   end
 
   before do
-    create(:role, code: Role::REGISTERED_USER_CODE, name: "注册用户")
+    # seeds 已经预置 registered_user 这个内置角色；这里用 find_or_create_by 兼容两种情况
+    Role.find_or_create_by!(code: Role::REGISTERED_USER_CODE) do |r|
+      r.name = "注册用户"
+      r.status = :enabled
+    end
   end
 
   it "注册成功后直接返回登录态" do

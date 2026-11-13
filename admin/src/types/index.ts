@@ -127,8 +127,8 @@ export interface NoteSection {
   images?: string[]
 }
 
-/** 内容状态：草稿 / 待审 / 已发布 / 已下架 */
-export type NoteStatus = 'draft' | 'pending' | 'published' | 'archived'
+/** 内容状态：草稿 / 待审 / 已发布 / 已下架 / 已驳回 */
+export type NoteStatus = 'draft' | 'pending' | 'published' | 'archived' | 'rejected'
 
 /** 管理后台看到的内容（字段用数据库列名，便于编辑弹窗原样回填） */
 export interface AdminNote {
@@ -177,4 +177,40 @@ export interface ProfileResult {
   user: UserInfo
   roles: string[]
   permissions: string[]
+}
+
+/** 审核流水条目（时间线上的一条记录） */
+export interface ReviewRecord {
+  id: number
+  action: 'submit' | 'approve' | 'reject' | 'withdraw' | 'auto_pending' | 'archive' | 'restore' | 'force_publish'
+  from_status: NoteStatus | null
+  to_status: NoteStatus | null
+  reason: string | null
+  /** 审核人脱敏后的显示名（作者侧看是 "审核员 N"，审核侧看是真实姓名或 "系统"） */
+  reviewer_display: string
+  created_at: string
+}
+
+/** 审核队列接口里一条待审核/已审核的内容摘要 */
+export interface ReviewQueueItem {
+  id: number
+  title: string
+  cover_url: string
+  author_name: string
+  user_id: number
+  channel: string
+  status: NoteStatus
+  created_at: string
+  /** 进入当前状态的时间（最近一次流水的 created_at） */
+  pending_since?: string
+  /** 最近一次流水的动作类型 */
+  last_action?: ReviewRecord['action']
+  /** 最近一次的驳回原因 */
+  last_reason?: string
+}
+
+export interface ReviewQueueListResult {
+  items: ReviewQueueItem[]
+  channels: string[]
+  meta: PageMeta
 }

@@ -2,21 +2,24 @@ require "rails_helper"
 
 RSpec.describe "Api::V1::Auth", type: :request do
   describe "POST /api/v1/auth/login" do
-    let!(:user) { create(:user, email: "admin@example.com", password: "Admin@123456") }
+    let!(:user) do
+      # 避免和 seeds 里的 admin@example.com 冲突
+      create(:user, email: "login_test@example.com", password: "Password@123")
+    end
 
     it "邮箱密码正确时返回 access / refresh token 与权限码" do
-      post "/api/v1/auth/login", params: { email: "admin@example.com", password: "Admin@123456" }
+      post "/api/v1/auth/login", params: { email: "login_test@example.com", password: "Password@123" }
 
       expect(response).to have_http_status(:ok)
       expect(json_body["access_token"]).to be_present
       expect(json_body["refresh_token"]).to be_present
       expect(json_body["expires_in"]).to eq(JsonWebToken.access_expire_in.to_i)
-      expect(json_body["user"]["email"]).to eq("admin@example.com")
+      expect(json_body["user"]["email"]).to eq("login_test@example.com")
       expect(json_body).to have_key("permissions")
     end
 
     it "密码错误时返回 401" do
-      post "/api/v1/auth/login", params: { email: "admin@example.com", password: "wrong-password" }
+      post "/api/v1/auth/login", params: { email: "login_test@example.com", password: "wrong-password" }
 
       expect(response).to have_http_status(:unauthorized)
       expect(json_body["error"]).to eq("邮箱或密码错误")
@@ -25,7 +28,7 @@ RSpec.describe "Api::V1::Auth", type: :request do
     it "账号被禁用时返回 403" do
       user.update!(status: :disabled)
 
-      post "/api/v1/auth/login", params: { email: "admin@example.com", password: "Admin@123456" }
+      post "/api/v1/auth/login", params: { email: "login_test@example.com", password: "Password@123" }
 
       expect(response).to have_http_status(:forbidden)
     end

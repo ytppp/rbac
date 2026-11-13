@@ -117,7 +117,7 @@ system:user:create / system:user:update / system:user:delete
 ### 1. 启动
 
 ```bash
-cd rbac
+cd tracemark
 docker compose up -d --build
 ```
 

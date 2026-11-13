@@ -41,7 +41,7 @@ export function setupRouterGuard(router: Router) {
   })
 
   router.afterEach((to) => {
-    const appTitle = import.meta.env.VITE_APP_TITLE || '权限管理平台'
+    const appTitle = import.meta.env.VITE_APP_TITLE || ''
     const title = to.meta.title as string | undefined
     document.title = title ? `${title} - ${appTitle}` : appTitle
   })

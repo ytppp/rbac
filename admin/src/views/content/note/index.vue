@@ -20,6 +20,9 @@
 
         <div class="spacer" />
 
+        <span class="page-hint">
+          {{ hasReviewPrivilege ? '全部内容' : '仅显示我发布的内容' }}
+        </span>
         <el-button v-perm="'content:note:create'" type="primary" :icon="Plus" @click="openCreate">
           新增内容
         </el-button>
@@ -57,19 +60,49 @@
         <el-table-column label="创建时间" width="170">
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="230" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 'pending'" v-perm="'content:note:review'" link type="success" @click="changeStatus(row, 'published')">
-              通过
+            <!-- 作者在草稿/驳回态能提交，审核视角手动提交也可以 -->
+            <el-button
+              v-if="canSubmit(row)"
+              v-perm="'content:note:submit'"
+              link
+              type="primary"
+              @click="handleSubmit(row)"
+            >
+              提交审核
             </el-button>
-            <el-button v-else-if="row.status === 'published'" v-perm="'content:note:review'" link type="warning" @click="changeStatus(row, 'archived')">
-              下架
+            <!-- 作者撤回待审内容 -->
+            <el-button
+              v-if="canWithdraw(row)"
+              v-perm="'content:note:withdraw'"
+              link
+              type="warning"
+              @click="handleWithdraw(row)"
+            >
+              撤回
             </el-button>
-            <el-button v-perm="'content:note:update'" link type="primary" @click="openEdit(row)">
+            <!-- 编辑：草稿/驳回态作者可编，已发布/已下架只有审核视角能 -->
+            <el-button
+              v-if="canEdit(row)"
+              v-perm="'content:note:update'"
+              link
+              type="primary"
+              @click="openEdit(row)"
+            >
               编辑
             </el-button>
-            <el-button v-perm="'content:note:delete'" link type="danger" @click="handleDelete(row)">
+            <el-button
+              v-perm="'content:note:delete'"
+              link
+              type="danger"
+              :disabled="!canDelete(row)"
+              @click="handleDelete(row)"
+            >
               删除
+            </el-button>
+            <el-button v-perm="'content:review:history'" link type="info" @click="openReviewHistory(row)">
+              审核历史
             </el-button>
           </template>
         </el-table-column>
@@ -115,11 +148,11 @@
         </el-form-item>
 
         <el-form-item label="状态">
-          <el-select v-model="form.status" style="width: 200px" :disabled="!canReview">
+          <el-select v-model="form.status" style="width: 200px" :disabled="!hasReviewPrivilege">
             <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
           <span class="hint block">
-            {{ canReview ? '待审内容需要先通过审核，才会出现在内容社区' : '审核状态由管理员维护，保存后保持当前状态' }}
+            {{ hasReviewPrivilege ? '审核视角可直接指定状态' : '作者提交后进入待审，通过后自动发布' }}
           </span>
         </el-form-item>
 
@@ -171,7 +204,6 @@
             <el-input v-model="form.cover_url" placeholder="图片直链，或下方用提示词生成" />
           </el-form-item>
 
-          <!-- 便捷工具：填提示词 -> 调用文生图服务拼出封面地址，并自动带上宽高比 -->
           <el-form-item label="提示词生成">
             <div class="gen-row">
               <el-input v-model="genPrompt" placeholder="英文提示词，如 sunny beach..." />
@@ -295,7 +327,6 @@
           </span>
         </el-form-item>
 
-        <!-- 作者已有头像时，这个兜底色不参与展示，直接隐藏避免误解 -->
         <el-form-item v-if="!hasOwnAvatar" label="头像颜色" prop="avatar_color">
           <el-color-picker v-model="form.avatar_color" />
           <span class="hint">作者无头像时，用它作为首字圆圈的底色</span>
@@ -309,8 +340,42 @@
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmitForm">确定</el-button>
       </template>
+    </el-dialog>
+
+    <!-- 审核历史弹层 -->
+    <el-dialog
+      v-model="reviewDialog.visible"
+      :title="reviewDialog.title || '审核历史'"
+      width="620px"
+      top="8vh"
+    >
+      <el-timeline v-loading="reviewDialog.loading">
+        <el-timeline-item
+          v-for="(item, index) in reviewDialog.items"
+          :key="item.id || index"
+          :timestamp="formatTime(item.created_at)"
+          placement="top"
+          :type="reviewItemType(item)"
+        >
+          <div class="review-timeline-main">
+            <el-tag :type="reviewItemTagType(item)" size="small">
+              {{ reviewActionLabel(item.action) }}
+            </el-tag>
+            <span class="review-status-change" v-if="item.from_status || item.to_status">
+              {{ item.from_status ? statusLabel(item.from_status) : '—' }}
+              <el-icon class="change-arrow"><ArrowRight /></el-icon>
+              {{ item.to_status ? statusLabel(item.to_status) : '—' }}
+            </span>
+          </div>
+          <div class="review-timeline-sub">
+            <span class="reviewer">{{ item.reviewer_display }}</span>
+            <span v-if="item.reason" class="reason">「{{ item.reason }}」</span>
+          </div>
+        </el-timeline-item>
+      </el-timeline>
+      <el-empty v-if="!reviewDialog.loading && !reviewDialog.items.length" description="暂无审核记录" />
     </el-dialog>
   </div>
 </template>
@@ -318,8 +383,17 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Close, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
-import { createNote, deleteNote, fetchNotes, updateNote, uploadNoteImage } from '@/api/note'
+import { ArrowRight, Close, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
+import {
+  createNote,
+  deleteNote,
+  fetchNoteReviews,
+  fetchNotes,
+  submitNote,
+  updateNote,
+  uploadNoteImage,
+  withdrawNote
+} from '@/api/note'
 import { fetchTags, type AdminTag } from '@/api/tag'
 import LocationPicker from '@/components/LocationPicker.vue'
 import { useUserStore } from '@/stores/user'
@@ -331,19 +405,21 @@ import type {
   NoteSection,
   NoteSectionPoint,
   NoteSectionType,
-  NoteStatus
+  NoteStatus,
+  ReviewRecord
 } from '@/types'
 
 const userStore = useUserStore()
-// 审核权限：只有管理员能把内容通过审核 / 下架
-const canReview = computed(() => userStore.permissions.includes('content:note:review'))
+
+// 是否拥有审核视角：能看全部内容、绕过状态机、审核等
+const hasReviewPrivilege = computed(() =>
+  userStore.isSuperAdmin || userStore.hasPermission('content:review:list')
+)
 const currentUserName = computed(() => userStore.displayName)
-// 当前登录用户是否已有头像：有的话「头像颜色」这个兜底字段就用不上
 const hasOwnAvatar = computed(() => Boolean(userStore.userInfo?.avatar_url))
 
-/** 文生图服务地址，和 seed 里用的是同一个 */
+// 文生图服务地址，和 seed 里用的是同一个
 const IMAGE_API_BASE = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image'
-/** 可选尺寸，及各自对应的宽高比（宽 / 高） */
 const COVER_SIZES = ['square_hd', 'square', 'portrait_4_3', 'portrait_16_9', 'landscape_4_3', 'landscape_16_9']
 const SIZE_RATIOS: Record<string, number> = {
   square_hd: 1,
@@ -353,10 +429,8 @@ const SIZE_RATIOS: Record<string, number> = {
   landscape_4_3: 1.3333,
   landscape_16_9: 1.7778
 }
-/** 虚拟频道「推荐」不是真实数据，新增时不应该选它 */
 const ALL_CHANNEL = '推荐'
 
-/** 编辑弹窗里的分段表单：耗时用「分钟」录入，提交时换成秒 */
 interface SectionForm {
   title: string
   content: string
@@ -389,8 +463,20 @@ const isCreate = ref(true)
 const list = ref<AdminNote[]>([])
 const total = ref(0)
 const channels = ref<string[]>([])
-// 标签下拉：可复选已有标签，也可以直接输入新标签
 const tagOptions = ref<AdminTag[]>([])
+
+// 审核历史弹层
+const reviewDialog = reactive<{
+  visible: boolean
+  loading: boolean
+  title: string
+  items: ReviewRecord[]
+}>({
+  visible: false,
+  loading: false,
+  title: '',
+  items: []
+})
 
 const query = reactive({
   page: 1,
@@ -400,27 +486,75 @@ const query = reactive({
   status: undefined as NoteStatus | undefined
 })
 
-// 内容状态：草稿 / 待审 / 已发布 / 已下架
-const statusOptions: { label: string, value: NoteStatus }[] = [
+// 状态多了「已驳回」
+const statusOptions: { label: string; value: NoteStatus }[] = [
   { label: '草稿', value: 'draft' },
   { label: '待审', value: 'pending' },
   { label: '已发布', value: 'published' },
-  { label: '已下架', value: 'archived' }
+  { label: '已下架', value: 'archived' },
+  { label: '已驳回', value: 'rejected' }
 ]
 
-const STATUS_MAP: Record<NoteStatus, { label: string, type: 'info' | 'warning' | 'success' | 'danger' }> = {
+const STATUS_MAP: Record<NoteStatus, { label: string; type: 'info' | 'warning' | 'success' | 'danger' }> = {
   draft: { label: '草稿', type: 'info' },
   pending: { label: '待审', type: 'warning' },
   published: { label: '已发布', type: 'success' },
-  archived: { label: '已下架', type: 'danger' }
+  archived: { label: '已下架', type: 'danger' },
+  rejected: { label: '已驳回', type: 'danger' }
 }
 
-function statusLabel(status: NoteStatus) {
+function statusLabel(status?: NoteStatus | null) {
+  if (!status) return '—'
   return STATUS_MAP[status]?.label ?? status
 }
-
-function statusType(status: NoteStatus) {
+function statusType(status?: NoteStatus | null) {
+  if (!status) return 'info'
   return STATUS_MAP[status]?.type ?? 'info'
+}
+
+// 审核时间线的辅助
+const REVIEW_ACTION_LABELS: Record<string, string> = {
+  submit: '提交审核',
+  approve: '审核通过',
+  reject: '审核驳回',
+  withdraw: '作者撤回',
+  auto_pending: '内容已更新，自动重新审核',
+  archive: '强制下架',
+  restore: '重新发布',
+  force_publish: '管理员强制发布'
+}
+function reviewActionLabel(action: string) {
+  return REVIEW_ACTION_LABELS[action] ?? action
+}
+function reviewItemType(item: ReviewRecord) {
+  if (item.action === 'reject' || item.action === 'archive') return 'danger'
+  if (item.action === 'approve' || item.action === 'restore' || item.action === 'force_publish') return 'success'
+  if (item.action === 'auto_pending') return 'warning'
+  return 'primary'
+}
+function reviewItemTagType(item: ReviewRecord) {
+  if (item.action === 'reject' || item.action === 'archive') return 'danger'
+  if (item.action === 'approve' || item.action === 'restore' || item.action === 'force_publish') return 'success'
+  return 'warning'
+}
+
+// 按钮显隐
+const EDITABLE_STATUSES: NoteStatus[] = ['draft', 'rejected']
+function canEdit(row: AdminNote) {
+  if (hasReviewPrivilege.value) return true
+  return EDITABLE_STATUSES.includes(row.status)
+}
+function canSubmit(row: AdminNote) {
+  // 作者或审核视角都可以提交；后端会校验归属
+  return ['draft', 'rejected'].includes(row.status)
+}
+function canWithdraw(row: AdminNote) {
+  return row.status === 'pending'
+}
+function canDelete(row: AdminNote) {
+  // 作者不能删处罚状态的 archived；审核视角可以
+  if (hasReviewPrivilege.value) return true
+  return row.status !== 'archived'
 }
 
 const formRef = ref<FormInstance>()
@@ -434,12 +568,11 @@ const form = reactive({
   channel: '',
   sort: 0,
   content: '',
-  status: 'published' as NoteStatus,
+  status: 'draft' as NoteStatus,
   tags: [] as string[],
   sections: [createSection()] as SectionForm[]
 })
 
-// 提示词生成工具的本地状态（不提交给后端）
 const genPrompt = ref('')
 const genSize = ref(COVER_SIZES[0])
 
@@ -456,7 +589,6 @@ const rules: FormRules = {
   ]
 }
 
-/** 所有已上传图片（含所属段号），用于封面选择 */
 const uploadedImages = computed(() =>
   form.sections.flatMap((section, index) =>
     section.images.map((url) => ({ url, section: index + 1 }))
@@ -504,7 +636,7 @@ function resetForm() {
   form.channel = ''
   form.sort = 0
   form.content = ''
-  form.status = 'published'
+  form.status = 'draft'
   form.tags = []
   form.sections = [createSection()]
   genPrompt.value = ''
@@ -514,6 +646,8 @@ function resetForm() {
 function openCreate() {
   isCreate.value = true
   form.sections = [createSection()]
+  // 新建一律草稿，后端也会强制覆盖
+  form.status = 'draft'
   dialogVisible.value = true
 }
 
@@ -550,32 +684,28 @@ async function openEdit(row: AdminNote) {
   form.channel = row.channel
   form.sort = row.sort
   form.content = row.content ?? ''
-  form.status = row.status ?? 'published'
+  form.status = row.status ?? 'draft'
   form.tags = [...(row.tags ?? [])]
   form.sections = (row.sections ?? []).map(toSectionForm)
   if (!form.sections.length) {
     form.sections = [createSection()]
   }
 
-  // 旧的封面可能不是上传图片：有图片时默认用第一张上传图作为封面
   if (uploadedImages.value.length && !uploadedImages.value.some((item) => item.url === form.cover_url)) {
     await selectCover(uploadedImages.value[0]!.url)
   }
 }
 
-/** 用提示词 + 尺寸拼出封面地址，并同步宽高比 */
 function generateCover() {
   if (!genPrompt.value.trim()) {
     ElMessage.warning('请先输入提示词')
     return
   }
-
   form.cover_url = `${IMAGE_API_BASE}?prompt=${encodeURIComponent(genPrompt.value.trim())}&image_size=${genSize.value}`
   form.cover_ratio = SIZE_RATIOS[genSize.value] ?? 1
   ElMessage.success('已生成封面地址')
 }
 
-/** 读取图片真实宽高比，失败时保留原值 */
 function loadImageRatio(url: string): Promise<number | null> {
   return new Promise((resolve) => {
     const image = new Image()
@@ -585,7 +715,6 @@ function loadImageRatio(url: string): Promise<number | null> {
   })
 }
 
-/** 选一张上传图片作为封面，并同步宽高比 */
 async function selectCover(url: string) {
   form.cover_url = url
   const ratio = await loadImageRatio(url)
@@ -594,28 +723,23 @@ async function selectCover(url: string) {
   }
 }
 
-/** el-upload 钩子：手动上传，阻止组件自身再传一次 */
 function beforeUpload(section: SectionForm) {
   return async (file: File) => {
-    // 解码超大图很占内存，先挡掉明显不合理的原图
     if (file.size > 30 * 1024 * 1024) {
       ElMessage.warning('原图不能超过 30MB，请先压缩或裁剪')
       return false
     }
-
     uploadingCount.value += 1
     try {
-      // 大图先在浏览器里缩到长边 2400px 并转 WebP，再上传
       const compressed = await compressImage(file)
       const { url } = await uploadNoteImage(compressed)
       section.images.push(url)
-      // 还没有封面时，自动用刚上传的图片做封面
       if (!form.cover_url || !uploadedImages.value.some((item) => item.url === form.cover_url)) {
         await selectCover(url)
       }
       ElMessage.success(compressed.size < file.size ? '图片已压缩并上传' : '图片上传成功')
     } catch {
-      // 错误提示已统一处理
+      // 错误已统一处理
     } finally {
       uploadingCount.value -= 1
     }
@@ -637,7 +761,6 @@ function removeImage(section: SectionForm, index: number) {
 function addSection() {
   form.sections.push(createSection())
 }
-
 function removeSection(index: number) {
   const [removed] = form.sections.splice(index, 1)
   if (removed && removed.images.includes(form.cover_url)) {
@@ -648,25 +771,15 @@ function removeSection(index: number) {
     }
   }
 }
-
 function moveSection(index: number, delta: number) {
   const target = index + delta
-  if (target < 0 || target >= form.sections.length) {
-    return
-  }
+  if (target < 0 || target >= form.sections.length) return
   const [section] = form.sections.splice(index, 1)
-  if (section) {
-    form.sections.splice(target, 0, section)
-  }
+  if (section) form.sections.splice(target, 0, section)
 }
 
 function hasCoordinate(point: NoteSectionPoint) {
-  return (
-    typeof point.lng === 'number' &&
-    Number.isFinite(point.lng) &&
-    typeof point.lat === 'number' &&
-    Number.isFinite(point.lat)
-  )
+  return typeof point.lng === 'number' && Number.isFinite(point.lng) && typeof point.lat === 'number' && Number.isFinite(point.lat)
 }
 
 function buildPayload(): NotePayload {
@@ -675,42 +788,23 @@ function buildPayload(): NotePayload {
       const images = section.images.filter(Boolean)
       const title = section.title.trim()
       const hasContent = Boolean(section.content.trim())
-      const tripValid =
-        section.type !== 'none' &&
-        hasCoordinate(section.origin) &&
-        hasCoordinate(section.destination)
-
+      const tripValid = section.type !== 'none' && hasCoordinate(section.origin) && hasCoordinate(section.destination)
       const base: NoteSection = {
         title: title || undefined,
         content: hasContent ? section.content : undefined,
         images: images.length ? images : undefined
       }
-
-      if (!tripValid) {
-        return { ...base, type: 'none' }
-      }
-
+      if (!tripValid) return { ...base, type: 'none' }
       return {
         ...base,
         type: section.type,
-        origin: {
-          lng: section.origin.lng!,
-          lat: section.origin.lat!,
-          name: section.origin.name?.trim() || undefined
-        },
-        destination: {
-          lng: section.destination.lng!,
-          lat: section.destination.lat!,
-          name: section.destination.name?.trim() || undefined
-        },
+        origin: { lng: section.origin.lng!, lat: section.origin.lat!, name: section.origin.name?.trim() || undefined },
+        destination: { lng: section.destination.lng!, lat: section.destination.lat!, name: section.destination.name?.trim() || undefined },
         duration: section.duration ? Math.round(section.duration * 60) : undefined,
         completed: section.completed
       }
     })
-    // 完全空白的一段不提交
-    .filter((section) =>
-      Boolean(section.title || section.content || section.images?.length || section.type !== 'none')
-    )
+    .filter((section) => Boolean(section.title || section.content || section.images?.length || section.type !== 'none'))
 
   return {
     title: form.title.trim(),
@@ -720,27 +814,21 @@ function buildPayload(): NotePayload {
     channel: form.channel.trim(),
     sort: form.sort,
     content: form.content,
-    // 没有审核权限的人不提交状态，避免覆盖管理员设置的审核状态
-    status: canReview.value ? form.status : undefined,
+    // 只有审核视角能指定状态；后端也会再校验一次
+    status: hasReviewPrivilege.value ? form.status : undefined,
     tags: form.tags,
     sections
   }
 }
 
-async function handleSubmit() {
+async function handleSubmitForm() {
   if (!formRef.value) return
-
-  // 行程段必须填完整的起终点经纬度，否则地图画不出来
   for (const [index, section] of form.sections.entries()) {
-    if (
-      section.type !== 'none' &&
-      (!hasCoordinate(section.origin) || !hasCoordinate(section.destination))
-    ) {
+    if (section.type !== 'none' && (!hasCoordinate(section.origin) || !hasCoordinate(section.destination))) {
       ElMessage.warning(`第 ${index + 1} 段行程请选择完整的起点和终点`)
       return
     }
   }
-
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
@@ -756,13 +844,17 @@ async function handleSubmit() {
     dialogVisible.value = false
     loadList()
   } catch {
-    // 错误提示已统一处理
+    // 错误已统一处理
   } finally {
     submitting.value = false
   }
 }
 
 async function handleDelete(row: AdminNote) {
+  if (!canDelete(row)) {
+    ElMessage.warning(row.status === 'archived' ? '已下架的内容需要审核视角才能删除' : '当前状态下不可删除')
+    return
+  }
   try {
     await ElMessageBox.confirm(`确定删除内容「${row.title}」吗？`, '提示', { type: 'warning' })
   } catch {
@@ -773,17 +865,53 @@ async function handleDelete(row: AdminNote) {
   loadList()
 }
 
-/** 审核快捷操作：通过 / 下架 */
-async function changeStatus(row: AdminNote, status: NoteStatus) {
-  await updateNote(row.id, { status })
-  ElMessage.success(status === 'published' ? '已通过审核' : '已下架')
+async function handleSubmit(row: AdminNote) {
+  try {
+    await ElMessageBox.confirm(
+      `确定提交内容「${row.title}」进入审核吗？审核通过后才会在社区上线。`,
+      '提交审核',
+      { type: 'info' }
+    )
+  } catch {
+    return
+  }
+  await submitNote(row.id)
+  ElMessage.success('已提交审核')
   loadList()
 }
 
-/** 标签下拉数据：编辑内容时可直接复用已有标签；没有标签查询权限时不请求 */
-async function loadTags() {
-  if (!userStore.permissions.includes('content:tag:list')) return
+async function handleWithdraw(row: AdminNote) {
+  try {
+    await ElMessageBox.confirm(
+      `确定撤回内容「${row.title}」吗？撤回后回到草稿状态，可以继续编辑。`,
+      '撤回',
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  await withdrawNote(row.id)
+  ElMessage.success('已撤回')
+  loadList()
+}
 
+async function openReviewHistory(row: AdminNote) {
+  reviewDialog.visible = true
+  reviewDialog.loading = true
+  reviewDialog.title = `${row.title} · 审核历史`
+  try {
+    const result = await fetchNoteReviews(row.id)
+    reviewDialog.items = result.items
+  } catch {
+    reviewDialog.items = []
+  } finally {
+    reviewDialog.loading = false
+  }
+}
+
+// 标签下拉
+async function loadTags() {
+  if (!userStore.hasPermission('content:tag:list')) return
   const result = await fetchTags({ page: 1, per_page: 100 })
   tagOptions.value = result.items
 }
@@ -795,46 +923,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.page-hint {
+  margin-right: 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
 .cover-thumb {
   width: 50px;
   height: 50px;
   border-radius: 6px;
   display: block;
 }
-
 .muted {
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
-
 .gen-row {
   display: flex;
   gap: 8px;
   width: 100%;
 }
-
 .hint {
   margin-left: 10px;
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
-
 .hint.block {
   display: block;
   margin-left: 0;
   margin-top: 8px;
 }
-
 .author-text {
   color: var(--el-text-color-primary);
 }
-
 .section-tip {
   margin: -6px 0 12px;
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
-
 .section-card {
   margin-bottom: 14px;
   padding: 12px 12px 2px;
@@ -842,27 +969,22 @@ onMounted(() => {
   border-radius: 8px;
   background: var(--el-fill-color-blank);
 }
-
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
 }
-
 .section-title {
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
-
 .section-check {
   margin-left: 12px;
 }
-
 .upload-block {
   width: 100%;
 }
-
 .thumb-grid,
 .cover-picker {
   display: flex;
@@ -870,7 +992,6 @@ onMounted(() => {
   gap: 8px;
   margin-top: 10px;
 }
-
 .thumb {
   position: relative;
   width: 84px;
@@ -879,14 +1000,12 @@ onMounted(() => {
   border-radius: 8px;
   border: 1px solid var(--el-border-color-lighter);
 }
-
 .thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-
 .thumb__del {
   position: absolute;
   top: 2px;
@@ -902,7 +1021,6 @@ onMounted(() => {
   font-size: 12px;
   cursor: pointer;
 }
-
 .cover-option {
   position: relative;
   width: 100px;
@@ -912,18 +1030,15 @@ onMounted(() => {
   border: 2px solid transparent;
   cursor: pointer;
 }
-
 .cover-option.is-active {
   border-color: var(--el-color-primary);
 }
-
 .cover-option img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-
 .cover-option__tag {
   position: absolute;
   right: 0;
@@ -934,5 +1049,34 @@ onMounted(() => {
   color: #fff;
   font-size: 11px;
   text-align: center;
+}
+
+/* 审核时间线 */
+.review-timeline-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.review-status-change {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.change-arrow {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+.review-timeline-sub {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.review-timeline-sub .reviewer {
+  margin-right: 8px;
+}
+.review-timeline-sub .reason {
+  color: var(--el-color-danger);
 }
 </style>

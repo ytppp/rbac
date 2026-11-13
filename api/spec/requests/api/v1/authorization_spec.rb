@@ -34,10 +34,11 @@ RSpec.describe "接口级权限校验", type: :request do
 
     before do
       editor.roles << create(:role, code: "content_editor", permission_codes: %w[content:note:update])
-      reviewer.roles << create(:role, code: "content_reviewer", permission_codes: %w[content:note:update content:note:review])
+      # 审核视角的判定已从 content:note:review 迁移到 content:review:list
+      reviewer.roles << create(:role, code: "content_reviewer", permission_codes: %w[content:note:update content:review:list])
     end
 
-    it "没有 content:note:review 时不能修改状态" do
+    it "没有审核视角时不能修改审核状态" do
       patch "/api/v1/admin/notes/#{note.id}",
             params: { status: "published" },
             headers: auth_headers(editor),
@@ -47,7 +48,7 @@ RSpec.describe "接口级权限校验", type: :request do
       expect(note.reload.status).to eq("pending")
     end
 
-    it "有 content:note:review 时可以下架内容" do
+    it "有审核视角时可以下架内容" do
       note.update!(status: :published)
 
       patch "/api/v1/admin/notes/#{note.id}",
@@ -57,6 +58,47 @@ RSpec.describe "接口级权限校验", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(note.reload.status).to eq("archived")
+    end
+  end
+
+  describe "审核历史（content:review:history）" do
+    let(:author) { create(:user, role_codes: []) }
+    let(:note) { create(:note, user: author, author_name: author.name, status: :draft) }
+
+    before do
+      # 不依赖 seeds 里的内置角色，测试库未必跑了 seeds，直接建一个带正确权限的角色
+      author.roles << create(
+        :role,
+        code: "test_registered_user",
+        permission_codes: %w[content:note:list content:review:history]
+      )
+    end
+
+    it "注册用户作为作者可以看自己内容的审核历史" do
+      get "/api/v1/admin/notes/#{note.id}/reviews", headers: auth_headers(author)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "没有 content:review:history 权限时不能看审核历史" do
+      bare = create(:user, role_codes: [])
+      bare.roles << create(:role, code: "empty", permission_codes: %w[content:note:list])
+
+      get "/api/v1/admin/notes/#{note.id}/reviews", headers: auth_headers(bare)
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "注册用户不能看他人内容的审核历史" do
+      other_note = create(:note, status: :draft)
+
+      get "/api/v1/admin/notes/#{other_note.id}/reviews", headers: auth_headers(author)
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "已发布的内容作者仍然能看自己内容的审核历史" do
+      note.update!(status: :published)
+
+      get "/api/v1/admin/notes/#{note.id}/reviews", headers: auth_headers(author)
+      expect(response).to have_http_status(:ok)
     end
   end
 end

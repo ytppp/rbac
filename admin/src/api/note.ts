@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { AdminNote, AdminNoteListResult, NotePayload } from '@/types'
+import type { AdminNote, AdminNoteListResult, NotePayload, ReviewRecord } from '@/types'
 
 export interface NoteQuery {
   page?: number
@@ -30,6 +30,20 @@ export function deleteNote(id: number) {
 export function uploadNoteImage(file: File) {
   const form = new FormData()
   form.append('file', file)
-  // 不手动指定 Content-Type，交给浏览器带上 multipart boundary
   return request.post<never, { url: string }>('/admin/note_images', form)
+}
+
+/** 提交审核：草稿/驳回 → 待审 */
+export function submitNote(id: number) {
+  return request.post<never, AdminNote>(`/admin/notes/${id}/submit`)
+}
+
+/** 作者撤回：待审 → 草稿 */
+export function withdrawNote(id: number) {
+  return request.post<never, AdminNote>(`/admin/notes/${id}/withdraw`)
+}
+
+/** 查看审核历史（审核视角可看全部，作者只能看自己的） */
+export function fetchNoteReviews(id: number) {
+  return request.get<never, { items: ReviewRecord[] }>(`/admin/notes/${id}/reviews`)
 }

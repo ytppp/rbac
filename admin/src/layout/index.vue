@@ -20,7 +20,7 @@
 import Navbar from './components/Navbar.vue'
 import SidebarMenu from './components/SidebarMenu.vue'
 
-const appTitle = import.meta.env.VITE_APP_TITLE || '权限管理平台'
+const appTitle = import.meta.env.VITE_APP_TITLE || '行迹·管理平台'
 </script>
 
 <style scoped>

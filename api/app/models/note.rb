@@ -3,8 +3,9 @@ class Note < ApplicationRecord
   # 虚拟频道「推荐」，并非真实 channel 值，仅作约定
   ALL_CHANNEL = "推荐".freeze
 
-  # 内容状态：草稿 / 待审 / 已发布 / 已下架
-  STATUSES = { draft: 0, pending: 1, published: 2, archived: 3 }.freeze
+  # 内容状态：草稿 / 待审 / 已发布 / 已下架 / 已驳回
+  # 已驳回：审核未通过，作者可编辑后重新提交
+  STATUSES = { draft: 0, pending: 1, published: 2, archived: 3, rejected: 4 }.freeze
   enum :status, STATUSES, validate: true
 
   validates :title, presence: true, length: { maximum: 100 }
@@ -25,6 +26,8 @@ class Note < ApplicationRecord
   has_many :note_tags, dependent: :destroy
   has_many :tags, through: :note_tags
   has_many :reports, dependent: :destroy
+  # 审核流水：每次状态变更写一条
+  has_many :note_reviews, dependent: :destroy
 
   # 作者：管理后台新建内容时挂到当前登录用户上；历史数据允许为空
   belongs_to :user, optional: true
@@ -58,7 +61,13 @@ class Note < ApplicationRecord
   }
 
   # 不用 DISTINCT：Postgres 要求 ORDER BY 的列出现在 SELECT 列表中
+  # 注意：app 端的频道列表只包含已发布内容的频道，draft/rejected 的频道不上首页
   def self.channel_list
+    [ALL_CHANNEL] + published.sorted.pluck(:channel).uniq
+  end
+
+  # 后台（admin）需要所有状态内容的频道，便于筛选
+  def self.channel_list_all
     [ALL_CHANNEL] + sorted.pluck(:channel).uniq
   end
 end

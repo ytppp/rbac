@@ -43,6 +43,8 @@ Rails.application.routes.draw do
       get "me/notes",     to: "me#notes"
       get "me/favorites", to: "me#favorites"
       get "me/likes",     to: "me#likes"
+      # 作者侧看自己内容的审核历史（脱敏显示审核人）
+      get "me/notes/:id/reviews", to: "me#note_reviews"
 
       # 作者主页：公开
       get "authors/:id", to: "authors#show"
@@ -61,7 +63,27 @@ Rails.application.routes.draw do
       namespace :admin do
         # 首页数据看板
         get "dashboard/stats", to: "dashboard#stats"
-        resources :notes, only: %i[index create update destroy]
+
+        # 内容管理：作者默认只看到自己的，超管/审核看全部（后端强校验）
+        resources :notes, only: %i[index create update destroy] do
+          member do
+            # 提交审核：draft / rejected → pending
+            post :submit
+            # 作者撤回待审 → draft
+            post :withdraw
+            # 审核历史（审核侧看全量，前端传 is_reviewer 决定脱敏）
+            get  :reviews, to: 'notes#reviews'
+          end
+        end
+
+        # 审核队列与操作：独立模块，需要 content:review:* 权限
+        resources :reviews, only: %i[index] do
+          member do
+            post :approve
+            post :reject
+          end
+        end
+
         # 标签维护：需要 content:tag:* 权限
         resources :tags, only: %i[index create update destroy]
         # 举报处理：需要 content:report:* 权限
