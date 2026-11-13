@@ -9,14 +9,14 @@ default: &default
 
 development:
   <<: *default
-  database: rbac_admin_development
+  database: tracemark_development
 
 test:
   <<: *default
-  database: rbac_admin_test
+  database: tracemark_test
 
 production:
   <<: *default
-  database: <%= ENV.fetch("DB_NAME", "rbac_admin_production") %>
-  username: <%= ENV.fetch("DB_USER", "rbac_admin") %>
+  database: <%= ENV.fetch("DB_NAME", "tracemark_production") %>
+  username: <%= ENV.fetch("DB_USER", "tracemark") %>
   password: <%= ENV["DB_PASSWORD"] %>

@@ -1,5 +1,5 @@
-const ACCESS_TOKEN_KEY = 'rbac_admin_token'
-const REFRESH_TOKEN_KEY = 'rbac_admin_refresh_token'
+const ACCESS_TOKEN_KEY = 'tracemark_admin_token'
+const REFRESH_TOKEN_KEY = 'tracemark_admin_refresh_token'
 
 export function getToken(): string {
   return localStorage.getItem(ACCESS_TOKEN_KEY) || ''

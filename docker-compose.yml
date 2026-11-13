@@ -1,12 +1,12 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: rbac-db
+    container_name: tracemark-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-rbac_admin_development}
+      POSTGRES_DB: ${DB_NAME:-tracemark_development}
       TZ: Asia/Shanghai
     ports:
       - "${DB_PORT_PUBLISHED:-5432}:5432"
@@ -21,7 +21,7 @@ services:
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-rbac_admin_development}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-tracemark_development}"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -29,7 +29,7 @@ services:
   # Sidekiq / Redis — 异步队列，评论/点赞/审核触发的通知走这里，不再阻塞 API 响应
   redis:
     image: redis:7-alpine
-    container_name: rbac-redis
+    container_name: tracemark-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -40,7 +40,7 @@ services:
   sidekiq:
     build:
       context: ./api
-    container_name: rbac-sidekiq
+    container_name: tracemark-sidekiq
     restart: unless-stopped
     environment:
       RAILS_ENV: development
@@ -63,7 +63,7 @@ services:
   api:
     build:
       context: ./api
-    container_name: rbac-api
+    container_name: tracemark-api
     restart: unless-stopped
     environment:
       RAILS_ENV: development
@@ -105,7 +105,7 @@ services:
   admin:
     build:
       context: ./admin
-    container_name: rbac-admin
+    container_name: tracemark-admin
     restart: unless-stopped
     environment:
       VITE_API_BASE_URL: /api/v1
@@ -125,7 +125,7 @@ services:
   app:
     build:
       context: ./app
-    container_name: rbac-app
+    container_name: tracemark-app
     restart: unless-stopped
     env_file: ./app/.env
     environment:

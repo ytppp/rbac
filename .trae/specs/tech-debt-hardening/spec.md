@@ -90,10 +90,10 @@
 - 不改 Dockerfile 的安装步骤（curl 已存在）。
 
 ## 验证步骤
-1. `docker exec rbac-api sh -c "bundle install"` 安装新 gem。
-2. `docker exec rbac-api sh -c "RAILS_ENV=test bundle exec rspec"`：预期原 41 个 + 新增 model/refresh/swagger 用例全绿。
-3. `docker exec rbac-api sh -c "bundle exec rake rswag:specs:swaggerize"`，然后 `curl -I http://localhost:3000/api-docs`（或 Ui 页面）确认可访问。
-4. `docker compose up -d --force-recreate api db`，`docker inspect --format '{{.State.Health.Status}}' rbac-api` 为 `healthy`。
+1. `docker exec tracemark-api sh -c "bundle install"` 安装新 gem。
+2. `docker exec tracemark-api sh -c "RAILS_ENV=test bundle exec rspec"`：预期原 41 个 + 新增 model/refresh/swagger 用例全绿。
+3. `docker exec tracemark-api sh -c "bundle exec rake rswag:specs:swaggerize"`，然后 `curl -I http://localhost:3000/api-docs`（或 Ui 页面）确认可访问。
+4. `docker compose up -d --force-recreate api db`，`docker inspect --format '{{.State.Health.Status}}' tracemark-api` 为 `healthy`。
 5. `curl -s -X POST http://localhost:3000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"email":"admin@example.com","password":"Admin@123456"}'` 返回 `access_token` + `refresh_token`；再用 refresh_token 调 `/auth/refresh` 成功。
 6. app / admin 冒烟：登录、刷新页面仍保持登录、401 后自动续期。
 7. 提交并 `git push origin feat/content-community`。

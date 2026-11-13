@@ -41,12 +41,12 @@ export default defineNuxtConfig({
   // },
   app: {
     head: {
-      title: '发现 · 旅行手记',
+      title: '行迹 · 旅行手记',
       htmlAttrs: { lang: 'zh-CN' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。' }
+        { name: 'description', content: '行迹是一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。' }
       ]
     }
   },

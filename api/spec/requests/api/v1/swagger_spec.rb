@@ -1,6 +1,6 @@
 require "swagger_helper"
 
-RSpec.describe "RBAC API V1", type: :request, swagger_doc: "v1/swagger.yaml" do
+RSpec.describe "Tracemark API V1", type: :request, swagger_doc: "v1/swagger.yaml" do
   let(:user) { create(:user) }
 
   path "/auth/login" do

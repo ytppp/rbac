@@ -1,4 +1,6 @@
-# 权限管理平台（RBAC）
+# 行迹 Tracemark
+
+行迹是一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。仓库同时包含完整的管理后台与 RBAC 权限体系。
 
 一个仓库包含三个并列模块：
 
@@ -67,8 +69,8 @@
 │   ├── nuxt.config.ts           # runtimeConfig 中配置 api 地址
 │   └── Dockerfile               # node:20-alpine 镜像
 │
-├── docker-compose.yml           # db / api / admin / app 四服务编排
-├── .env.example                 # Docker 与本地启动共用的环境变量模板
+├── docker-compose.yml           # db / redis / sidekiq / api / admin / app 六服务编排
+├── api/.env.example             # Docker 与本地启动共用的环境变量模板
 └── README.md
 ```
 
@@ -121,13 +123,15 @@ docker compose up -d --build
 
 首次启动会自动完成：构建 api / admin / app 镜像 → 启动 PostgreSQL → 等数据库健康检查通过 → 执行 `db:prepare` 建库建表 → 执行 `db:seed` 灌入初始权限树、账号与社区内容 → 启动 Rails、Vite 与 Nuxt。
 
+容器名统一以 `tracemark-` 开头：`tracemark-api`、`tracemark-admin`、`tracemark-app`、`tracemark-db`、`tracemark-redis`、`tracemark-sidekiq`。
+
 跟踪启动进度：
 
 ```bash
 docker compose logs -f
 ```
 
-看到 `api` 输出 `权限初始化完成：17 个权限节点 / 3 个角色 / 2 个账号` 与 `内容初始化完成：18 条内容 / 9 个频道` 即为就绪（`db:seed` 是幂等的，重复启动不会产生重复数据）。
+看到 `api` 输出 `权限初始化完成：32 个权限节点 / 4 个角色 / 3 个账号` 与 `内容初始化完成：19 条内容 / 9 个频道` 即为就绪（`db:seed` 是幂等的，重复启动不会产生重复数据）。
 
 ### 2. 访问地址
 
@@ -135,19 +139,19 @@ docker compose logs -f
 | ----------------------- | ----- | ----------------------- |
 | <http://localhost:5173> | admin | 管理后台（Vite Dev Server）   |
 | <http://localhost:3001> | app   | 内容社区首页（Nuxt Dev Server） |
-| <http://localhost:3000> | api   | 后端 API                  |
+| <http://localhost:3000> | api   | 后端 API（`/api-docs` 为 Swagger UI）  |
 | localhost:5432          | db    | PostgreSQL              |
 
 ### 3. 常用命令
 
 ```bash
-docker compose ps                                     # 查看四个容器状态
+docker compose ps                                     # 查看六个容器状态
 docker compose logs -f api                            # 跟踪后端日志
 docker compose logs -f app                            # 跟踪 app 日志
 docker compose exec api bash                          # 进入后端容器
 docker compose exec api ruby bin/rails console        # Rails 控制台
 docker compose exec api ruby bin/rails db:seed        # 重新灌入种子数据（含社区内容）
-docker compose exec db psql -U postgres -d rbac_admin_development   # 直连数据库
+docker compose exec db psql -U postgres -d tracemark_development   # 直连数据库
 docker compose restart api                            # 重启某个服务
 docker compose down                                   # 停止并删除容器（数据库数据保留）
 docker compose down -v                                # 停止并删除容器 + 数据卷（数据清空）
@@ -155,12 +159,12 @@ docker compose down -v                                # 停止并删除容器 + 
 
 ### 4. 环境变量
 
-`.env.example` 复制为 `.env` 后可覆盖默认值，`docker compose` 会自动读取：
+`.env.example`（模板见 `api/.env.example`，复制到仓库根目录并改名为 `.env`）可覆盖默认值，`docker compose` 会自动读取：
 
 ```ini
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_NAME=rbac_admin_development
+DB_NAME=tracemark_development
 DB_PORT_PUBLISHED=5432            # 宿主机映射端口，本机 5432 被占用时改这一项
 JWT_SECRET=dev-only-secret-please-change-in-production-32chars
 ```
@@ -373,7 +377,7 @@ npm run dev
 
 ## 八、内容社区 app
 
-`app/` 是一个独立的 Nuxt 3 应用，入口 `/` 直接就是内容首页，与管理后台互不影响。
+`app/` 是一个独立的 Nuxt 4 应用，入口 `/` 直接就是内容首页，与管理后台互不影响。
 
 ### 首页形态
 
@@ -384,7 +388,7 @@ npm run dev
 
 ### 数据来源
 
-内容全部来自 api 的公开接口 `GET /api/v1/notes`，18 条种子数据在 `api/db/seeds.rb` 末尾的「内容社区」段落维护，改完执行：
+内容全部来自 api 的公开接口 `GET /api/v1/notes`，19 条种子数据在 `api/db/seeds.rb` 末尾的「内容社区」段落维护，改完执行：
 
 ```bash
 docker compose exec api ruby bin/rails db:seed

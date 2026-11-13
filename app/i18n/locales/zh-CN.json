@@ -1,7 +1,7 @@
 {
   "brand": {
-    "name": "发现",
-    "sub": "TRAVEL NOTES"
+    "name": "行迹",
+    "sub": "TRACEMARK"
   },
   "header": {
     "searchPlaceholder": "搜索目的地、路线或旅行灵感",
@@ -95,7 +95,7 @@
     "altIndex": "{alt} 第 {index} 张"
   },
   "detail": {
-    "back": "返回发现",
+    "back": "返回行迹",
     "notFound": "内容不存在或已被删除",
     "map": "行程地图",
     "segmentCount": "{count} 段",
@@ -135,7 +135,7 @@
     "phone": "电话：010-8888 8888",
     "icp": "ICP 备案号：沪 ICP 备 00000000 号-1",
     "police": "公安网安备 31000000000000 号",
-    "copyright": "© 2026 发现",
+    "copyright": "© 2026 行迹",
     "linkAgreement": "用户协议",
     "linkLicense": "营业执照",
     "linkPrivacy": "隐私政策",
@@ -151,7 +151,7 @@
   },
   "auth": {
     "loginEyebrow": "WELCOME BACK",
-    "loginTitle": "登录发现",
+    "loginTitle": "登录行迹",
     "loginDesc": "登录后，收藏你走过的每一段旅程",
     "email": "邮箱",
     "emailPlaceholder": "you{'@'}example.com",
@@ -162,7 +162,7 @@
     "noAccount": "还没有账号？",
     "goRegister": "立即注册",
     "registerEyebrow": "JOIN THE JOURNEY",
-    "registerTitle": "加入发现",
+    "registerTitle": "加入行迹",
     "registerDesc": "注册后即可发布旅行手记，并进入内容管理",
     "name": "昵称",
     "namePlaceholder": "怎么称呼你",
@@ -197,7 +197,7 @@
     "notFound": "作者不存在或已被删除"
   },
   "meta": {
-    "title": "发现 · 旅行手记",
-    "description": "一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。"
+    "title": "行迹 · 旅行手记",
+    "description": "行迹是一个记录旅行的内容社区：用地图串起行程，用照片收藏沿途风景。"
   }
 }

@@ -8,7 +8,7 @@ RSpec.configure do |config|
     "v1/swagger.yaml" => {
       openapi: "3.0.1",
       info: {
-        title: "RBAC API V1",
+        title: "Tracemark API V1",
         version: "v1",
         description: "内容社区与管理后台接口。除标注公开的接口外，均需 Bearer access token。"
       },

@@ -13,7 +13,7 @@ require "action_view/railtie"
 # 读取 Gemfile，把里面的 gem 自动加载进来
 Bundler.require(*Rails.groups)
 
-module RbacAdmin
+module Tracemark
   class Application < Rails::Application
     # 加载 Rails 7.1 的默认配置（框架推荐的一套默认值，升级时保持行为一致）
     config.load_defaults 7.1
